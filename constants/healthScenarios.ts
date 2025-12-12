@@ -150,26 +150,37 @@ export const createHealthProfile = (scenario: HealthScenario, name: string = 'Pl
   return {
     name,
     diabetesType: config.diabetesType,
-    diagnosedYear: config.diabetesType === 'type1' 
+    diagnosedYear: config.diabetesType === 'type1'
       ? new Date().getFullYear() - 5
       : new Date().getFullYear() - 1,
-    
+
     currentGlucose: recentReadings[recentReadings.length - 1]?.value || config.startingGlucose,
     recentReadings: recentReadings.slice(-6), // Last 2 hours
     activeInsulin: [],
-    
+
     targetRange: config.targetRange,
     insulinSensitivityFactor: 50, // 1 unit = 50 mg/dL drop
     carbsToInsulinRatio: 10, // 1 unit per 10g carbs
-    
+
     insulinType: config.insulinRegimen,
     basalRate: config.insulinRegimen === 'pump' ? 1.5 : undefined,
-    
+
     sleepHours: 7,
     stressLevel: 45,
     exerciseMinutes: 30,
-    
+
     dailyHistory: [],
+
+    // Default privacy settings
+    privacySettings: {
+      mode: 'standard',
+      encryptHealthData: false,
+      glucoseLevels: 'public',
+      insulinDoses: 'public',
+      achievements: 'public',
+      gameStats: 'public',
+      healthProfile: 'public',
+    },
   };
 };
 

@@ -144,9 +144,17 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
   
   // Share functionality
   const handleShare = async () => {
-    const message = getShareMessage(score, accuracy, gradeInfo.grade);
+    // Apply privacy settings to the share message
+    let message = getShareMessage(score, accuracy, gradeInfo.grade);
+
+    // Check if achievements should be shared based on privacy settings
+    if (healthProfile?.privacySettings?.achievements === 'private') {
+      // Modify the message to be more generic when achievements are private
+      message = `Fought well in Glucose Wars! ${score} pts. ${accuracy}% accuracy.`;
+    }
+
     const url = 'https://748aff3b-fb26-4f04-8101-7fe9e9b19d93.canvases.tempo.build';
-    
+
     try {
       await Share.share({
         message: `${message}\n\n🎮 Play: ${url}`,
@@ -332,31 +340,47 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
                 </View>
               )}
 
-              {/* Health Profile Summary */}
+              {/* Health Profile Summary - Respects Privacy Settings */}
               {healthProfile && (
                 <View style={{ backgroundColor: 'rgba(59, 130, 246, 0.15)', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(59, 130, 246, 0.5)', marginBottom: 5 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
                     <Text style={{ color: '#93c5fd', fontWeight: 'bold', fontSize: 11 }}>💉 HEALTH PROFILE</Text>
-                    <Text style={{ color: '#60a5fa', fontWeight: 'bold', fontSize: 12 }}>{healthProfile.currentGlucose} mg/dL</Text>
+                    {healthProfile.privacySettings?.glucoseLevels !== 'private' ? (
+                      <Text style={{ color: '#60a5fa', fontWeight: 'bold', fontSize: 12 }}>{healthProfile.currentGlucose} mg/dL</Text>
+                    ) : (
+                      <Text style={{ color: '#6b7280', fontWeight: 'bold', fontSize: 12 }}>🔒 Private</Text>
+                    )}
                   </View>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 4 }}>
                     <View style={{ flex: 1, alignItems: 'center' }}>
                       <Text style={{ color: '#9ca3af', fontSize: 10, marginBottom: 2 }}>Diagnosis</Text>
-                      <Text style={{ color: '#d1d5db', fontWeight: '600', fontSize: 10, textAlign: 'center', textTransform: 'capitalize' }}>
-                        {healthProfile.diabetesType.replace('_', ' ')}
-                      </Text>
+                      {healthProfile.privacySettings?.healthProfile !== 'private' ? (
+                        <Text style={{ color: '#d1d5db', fontWeight: '600', fontSize: 10, textAlign: 'center', textTransform: 'capitalize' }}>
+                          {healthProfile.diabetesType.replace('_', ' ')}
+                        </Text>
+                      ) : (
+                        <Text style={{ color: '#6b7280', fontWeight: '600', fontSize: 10, textAlign: 'center' }}>🔒</Text>
+                      )}
                     </View>
                     <View style={{ flex: 1, alignItems: 'center' }}>
                       <Text style={{ color: '#9ca3af', fontSize: 10, marginBottom: 2 }}>Insulin</Text>
-                      <Text style={{ color: '#d1d5db', fontWeight: '600', fontSize: 10, textAlign: 'center', textTransform: 'capitalize' }}>
-                        {healthProfile.insulinType === 'none' ? 'None' : healthProfile.insulinType}
-                      </Text>
+                      {healthProfile.privacySettings?.insulinDoses !== 'private' ? (
+                        <Text style={{ color: '#d1d5db', fontWeight: '600', fontSize: 10, textAlign: 'center', textTransform: 'capitalize' }}>
+                          {healthProfile.insulinType === 'none' ? 'None' : healthProfile.insulinType}
+                        </Text>
+                      ) : (
+                        <Text style={{ color: '#6b7280', fontWeight: '600', fontSize: 10, textAlign: 'center' }}>🔒</Text>
+                      )}
                     </View>
                     <View style={{ flex: 1, alignItems: 'center' }}>
                       <Text style={{ color: '#9ca3af', fontSize: 10, marginBottom: 2 }}>Sleep</Text>
-                      <Text style={{ color: '#d1d5db', fontWeight: '600', fontSize: 10, textAlign: 'center' }}>
-                        {Math.round(healthProfile.sleepHours)}h
-                      </Text>
+                      {healthProfile.privacySettings?.healthProfile !== 'private' ? (
+                        <Text style={{ color: '#d1d5db', fontWeight: '600', fontSize: 10, textAlign: 'center' }}>
+                          {Math.round(healthProfile.sleepHours)}h
+                        </Text>
+                      ) : (
+                        <Text style={{ color: '#6b7280', fontWeight: '600', fontSize: 10, textAlign: 'center' }}>🔒</Text>
+                      )}
                     </View>
                   </View>
                 </View>
@@ -389,7 +413,12 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
                   Score: {gameState.score} • Accuracy: {Math.round((gameState.correctSwipes / (gameState.correctSwipes + gameState.incorrectSwipes)) * 100 || 0)}%
                 </Text>
                 <Text style={{ fontSize: 12, color: '#cbd5e1', textAlign: 'center', marginBottom: 8 }}>
-                  {healthProfile ? `Glucose: ${Math.round(healthProfile.currentGlucose)} mg/dL` : 'No glucose data'}
+                  {healthProfile ?
+                    (healthProfile.privacySettings?.glucoseLevels !== 'private' ?
+                      `Glucose: ${Math.round(healthProfile.currentGlucose)} mg/dL` :
+                      'Glucose: 🔒 Private') :
+                    'No glucose data'
+                  }
                 </Text>
                 <Text style={{ fontSize: 12, color: '#cbd5e1', textAlign: 'center' }}>
                   💡 Tip: In Challenge 1, you'll manage real glucose levels!

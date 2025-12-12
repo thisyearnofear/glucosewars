@@ -6,6 +6,7 @@ import {
   GlucoseReading,
   InsulinDose,
   FoodNutrients,
+  PrivacySettings,
 } from '@/types/health';
 import {
   createHealthProfile,
@@ -14,6 +15,7 @@ import {
   getGlucoseZone,
   INSULIN_PROFILES,
 } from '@/constants/healthScenarios';
+import { usePrivacyService } from './usePrivacyService';
 
 export const useHealthProfile = (initialScenario?: HealthScenario) => {
   const [healthProfile, setHealthProfile] = useState<HealthProfile>(() =>
@@ -28,6 +30,7 @@ export const useHealthProfile = (initialScenario?: HealthScenario) => {
     mealAbsorptionCurve: 'normal',
   });
 
+  const { encryptHealthData, decryptHealthData, filterDataByPrivacy } = usePrivacyService();
   const glucoseSimulationRef = useRef<number | null>(null);
 
   /**
@@ -241,6 +244,56 @@ export const useHealthProfile = (initialScenario?: HealthScenario) => {
     return Math.max(40, Math.min(400, projected));
   }, [healthProfile.currentGlucose, healthProfile.activeInsulin]);
 
+  /**
+   * Get health profile data respecting privacy settings
+   */
+  const getPrivacyFilteredProfile = useCallback(() => {
+    return filterDataByPrivacy(healthProfile, healthProfile.privacySettings);
+  }, [healthProfile, filterDataByPrivacy]);
+
+  /**
+   * Prepare health profile for storage/transmission with privacy settings applied
+   */
+  const prepareProfileForStorage = useCallback(async () => {
+    if (healthProfile.privacySettings?.mode === 'private') {
+      // If in private mode, encrypt the profile
+      const { ciphertext, proof } = await encryptHealthData(healthProfile);
+      return {
+        encrypted: true,
+        ciphertext,
+        proof,
+        privacySettings: healthProfile.privacySettings, // Keep privacy settings accessible
+      };
+    } else {
+      // In standard mode, return privacy-filtered data
+      return {
+        encrypted: false,
+        data: getPrivacyFilteredProfile(),
+      };
+    }
+  }, [healthProfile, encryptHealthData, getPrivacyFilteredProfile]);
+
+  /**
+   * Update privacy settings for the health profile
+   */
+  const updatePrivacySettings = useCallback((newPrivacySettings: Partial<PrivacySettings>) => {
+    setHealthProfile(prev => ({
+      ...prev,
+      privacySettings: {
+        ...(prev.privacySettings || {
+          mode: 'standard',
+          encryptHealthData: false,
+          glucoseLevels: 'public',
+          insulinDoses: 'public',
+          achievements: 'public',
+          gameStats: 'public',
+          healthProfile: 'public',
+        }),
+        ...newPrivacySettings,
+      },
+    }));
+  }, []);
+
   return {
     healthProfile,
     healthSimulation,
@@ -254,5 +307,9 @@ export const useHealthProfile = (initialScenario?: HealthScenario) => {
     updateLifestyle,
     getZone,
     getProjectedGlucose,
+    // Privacy-aware functions
+    getPrivacyFilteredProfile,
+    prepareProfileForStorage,
+    updatePrivacySettings,
   };
 };

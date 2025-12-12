@@ -3,6 +3,8 @@ import { View, Text, TouchableOpacity, Animated, Dimensions } from 'react-native
 import { ControlMode, UserMode } from '@/types/game';
 import { usePlayerProgress } from '@/hooks/usePlayerProgress';
 import { USER_MODE_CONFIGS } from '@/constants/userModes';
+import { PrivacyToggle } from '@/components/PrivacyToggle';
+import { PrivacySettingsModal } from '@/components/PrivacySettings';
 
 const { width } = Dimensions.get('window');
 
@@ -59,9 +61,10 @@ const FloatingFood: React.FC<{ emoji: string; delay: number; isAlly: boolean }> 
 
 export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onUserModeSelected, userModeSelected }) => {
   const [selectedMode, setSelectedMode] = useState<ControlMode>('swipe');
+  const [showPrivacySettings, setShowPrivacySettings] = useState(false);
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const glowAnim = useRef(new Animated.Value(0)).current;
-  const { progress, setUserMode } = usePlayerProgress();
+  const { progress, setUserMode, setPrivacyMode, updatePrivacySettings } = usePlayerProgress();
   const [showUserModeSelector, setShowUserModeSelector] = useState(userModeSelected === false);
 
   useEffect(() => {
@@ -218,6 +221,29 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onUserModeSelec
         {/* Progress Info (only for returning players) */}
         {progressInfo}
 
+        {/* Privacy Controls */}
+        <View className="bg-black/60 p-3 rounded-xl border border-cyan-700 mb-4 w-full max-w-sm">
+          <View className="flex-row justify-between items-center">
+            <View className="flex-1">
+              <Text className="text-cyan-400 text-xs font-bold mb-1">
+                🔐 PRIVACY
+              </Text>
+              <PrivacyToggle
+                currentMode={progress.privacyMode}
+                onToggle={(mode) => {
+                  setPrivacyMode(mode);
+                }}
+              />
+            </View>
+            <TouchableOpacity
+              className="p-2 ml-2"
+              onPress={() => setShowPrivacySettings(true)}
+            >
+              <Text className="text-cyan-400 text-2xl">⚙️</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
         {/* Control Mode Selector */}
         <View className="bg-black/60 p-3 rounded-2xl border-2 border-purple-700 mb-4 w-full max-w-sm">
           <Text className="text-amber-400 text-xs font-bold text-center mb-2">
@@ -312,6 +338,25 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onUserModeSelec
           A 60-Second Medieval Battle
         </Text>
       </View>
+
+      {/* Privacy Settings Modal */}
+      <PrivacySettingsModal
+        settings={progress.privacySettings || {
+          mode: 'standard',
+          encryptHealthData: false,
+          glucoseLevels: 'public',
+          insulinDoses: 'public',
+          achievements: 'public',
+          gameStats: 'public',
+          healthProfile: 'public',
+        }}
+        onSave={(settings) => {
+          updatePrivacySettings(settings);
+          setShowPrivacySettings(false);
+        }}
+        onClose={() => setShowPrivacySettings(false)}
+        visible={showPrivacySettings}
+      />
     </View>
   );
 };

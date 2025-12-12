@@ -43,28 +43,31 @@ export interface HealthProfile {
   name: string;
   diabetesType: DiabetesType;
   diagnosedYear?: number;
-  
+
   // Current state
   currentGlucose: number; // Latest reading
   recentReadings: GlucoseReading[]; // Last 24 hours (6 readings/day)
   activeInsulin: InsulinDose[];
-  
+
   // Settings
   targetRange: { min: number; max: number }; // 70-180 typical
   insulinSensitivityFactor: number; // 1 unit insulin = X mg/dL drop
   carbsToInsulinRatio: number; // 1 unit per X grams carbs
-  
+
   // Insulin regimen
   insulinType: InsulinType;
   basalRate?: number; // Units per hour (pump only)
-  
+
   // Lifestyle
   sleepHours: number; // Last night
   stressLevel: number; // 0-100
   exerciseMinutes: number; // Last 24h
-  
+
   // History (for trends)
   dailyHistory: DailyHealthMetrics[];
+
+  // Privacy settings
+  privacySettings?: PrivacySettings;
 }
 
 export interface HealthSimulationState {
@@ -113,6 +116,20 @@ export interface HealthAwareGameState {
  * Scenarios for onboarding
  */
 export type HealthScenario = 'recently_diagnosed' | 'well_controlled' | 'struggling' | 'newly_aware';
+
+// Privacy settings system
+export type PrivacyMode = 'standard' | 'private';
+export type Visibility = 'private' | 'public' | 'healthcare_only';
+
+export interface PrivacySettings {
+  mode: PrivacyMode;
+  encryptHealthData: boolean;
+  glucoseLevels: Visibility;
+  insulinDoses: Visibility;
+  achievements: Visibility;
+  gameStats: Visibility;
+  healthProfile: Visibility;
+}
 
 export interface HealthScenarioConfig {
   id: HealthScenario;

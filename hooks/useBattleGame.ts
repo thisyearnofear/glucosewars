@@ -1,14 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Dimensions } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { 
-  GameState, 
-  FoodUnit, 
-  StabilityZone, 
-  FoodDefinition, 
-  GameMode, 
-  BodyMetrics, 
-  TimePhase, 
+import {
+  GameState,
+  FoodUnit,
+  StabilityZone,
+  FoodDefinition,
+  GameMode,
+  BodyMetrics,
+  TimePhase,
   MorningCondition,
   PlotTwist,
   FoodEffects,
@@ -45,6 +45,7 @@ import {
   MESSAGE_POSITIONS,
 } from '@/constants/gameConfig';
 import { getReflectionMessage } from '@/constants/userModes';
+import { useVRFService } from './useVRFService';
 
 const { width, height } = Dimensions.get('window');
 
@@ -237,44 +238,108 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
   }, []);
 
   // Trigger a plot twist (Life Mode only)
-  const triggerPlotTwist = useCallback(() => {
-    // Use mode-specific plot twists if userMode is available, otherwise use default
-    const availableTwists = userMode
-      ? MODE_PLOT_TWISTS[userMode].filter(t => Math.random() > 0.3) // Random selection
-      : PLOT_TWISTS.filter(t => Math.random() > 0.3); // Use default for backward compatibility
+  // Initialize VRF service
+  const { generateFairPlotTwist, getVerifiableRandom } = useVRFService();
 
-    if (availableTwists.length === 0) return;
+  const [vrfEnabled, setVrfEnabled] = useState(false); // Toggle for testing VRF fairness
 
-    const twist = availableTwists[Math.floor(Math.random() * availableTwists.length)];
+  const triggerPlotTwist = useCallback(async () => {
+    try {
+      let twist, fairnessProof, isVerifiable;
 
-    setGameState(prev => {
-      if (prev.gameMode !== 'life' || prev.activePlotTwist || prev.plotTwistsTriggered >= 2) return prev;
+      if (vrfEnabled) {
+        // Use VRF for provably fair plot twists
+        const result = await generateFairPlotTwist(gameState.gameMode, Date.now());
+        twist = result.plotTwist;
+        fairnessProof = result.fairnessProof;
+        isVerifiable = result.isVerifiable;
+      } else {
+        // Use mode-specific plot twists if userMode is available, otherwise use default
+        const availableTwists = userMode
+          ? MODE_PLOT_TWISTS[userMode].filter(t => Math.random() > 0.3) // Random selection
+          : PLOT_TWISTS.filter(t => Math.random() > 0.3); // Use default for backward compatibility
 
-      // Apply immediate effect
-      const newMetrics = { ...prev.metrics };
-      if (twist.effect.energy) newMetrics.energy = Math.max(0, Math.min(100, newMetrics.energy + twist.effect.energy));
-      if (twist.effect.hydration) newMetrics.hydration = Math.max(0, Math.min(100, newMetrics.hydration + twist.effect.hydration));
-      if (twist.effect.nutrition) newMetrics.nutrition = Math.max(0, Math.min(100, newMetrics.nutrition + twist.effect.nutrition));
-      if (twist.effect.stability) newMetrics.stability = Math.max(0, Math.min(100, newMetrics.stability + twist.effect.stability));
+        if (availableTwists.length === 0) return;
 
-      return {
-        ...prev,
-        activePlotTwist: twist,
-        plotTwistTimer: twist.duration,
-        plotTwistsTriggered: prev.plotTwistsTriggered + 1,
-        metrics: newMetrics,
-      };
-    });
+        twist = availableTwists[Math.floor(Math.random() * availableTwists.length)];
+        fairnessProof = undefined; // No fairness proof when not using VRF
+        isVerifiable = false;
+      }
 
-    // Show the plot twist announcement with bonus condition as science text (if available)
-    if (twist.bonusCondition) {
-      showAnnouncement(`${twist.icon} ${twist.name}`, 'plot_twist', twist.bonusCondition);
-    } else {
-      showAnnouncement(`${twist.icon} ${twist.name}`, 'plot_twist');
+      setGameState(prev => {
+        if (prev.gameMode !== 'life' || prev.activePlotTwist || prev.plotTwistsTriggered >= 2) return prev;
+
+        // Apply immediate effect
+        const newMetrics = { ...prev.metrics };
+        if (twist.effect.energy) newMetrics.energy = Math.max(0, Math.min(100, newMetrics.energy + twist.effect.energy));
+        if (twist.effect.hydration) newMetrics.hydration = Math.max(0, Math.min(100, newMetrics.hydration + twist.effect.hydration));
+        if (twist.effect.nutrition) newMetrics.nutrition = Math.max(0, Math.min(100, newMetrics.nutrition + twist.effect.nutrition));
+        if (twist.effect.stability) newMetrics.stability = Math.max(0, Math.min(100, newMetrics.stability + twist.effect.stability));
+
+        return {
+          ...prev,
+          activePlotTwist: twist,
+          plotTwistTimer: twist.duration,
+          plotTwistsTriggered: prev.plotTwistsTriggered + 1,
+          metrics: newMetrics,
+        };
+      });
+
+      // Show the plot twist announcement with bonus condition as science text (if available)
+      // Include fairness proof badge if this is a verifiable plot twist
+      if (twist.bonusCondition) {
+        const announcementText = isVerifiable
+          ? `${twist.icon} ${twist.name} ⚖️ FAIR`
+          : `${twist.icon} ${twist.name}`;
+        showAnnouncement(announcementText, 'plot_twist', twist.bonusCondition);
+      } else {
+        const announcementText = isVerifiable
+          ? `${twist.icon} ${twist.name} ⚖️ FAIR`
+          : `${twist.icon} ${twist.name}`;
+        showAnnouncement(announcementText, 'plot_twist');
+      }
+      triggerScreenShake(12);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    } catch (error) {
+      console.error('Error triggering plot twist:', error);
+      // Fallback to regular plot twist on VRF error
+      const availableTwists = userMode
+        ? MODE_PLOT_TWISTS[userMode].filter(t => Math.random() > 0.3) // Random selection
+        : PLOT_TWISTS.filter(t => Math.random() > 0.3); // Use default for backward compatibility
+
+      if (availableTwists.length === 0) return;
+
+      const fallbackTwist = availableTwists[Math.floor(Math.random() * availableTwists.length)];
+
+      setGameState(prev => {
+        if (prev.gameMode !== 'life' || prev.activePlotTwist || prev.plotTwistsTriggered >= 2) return prev;
+
+        // Apply immediate effect
+        const newMetrics = { ...prev.metrics };
+        if (fallbackTwist.effect.energy) newMetrics.energy = Math.max(0, Math.min(100, newMetrics.energy + fallbackTwist.effect.energy));
+        if (fallbackTwist.effect.hydration) newMetrics.hydration = Math.max(0, Math.min(100, newMetrics.hydration + fallbackTwist.effect.hydration));
+        if (fallbackTwist.effect.nutrition) newMetrics.nutrition = Math.max(0, Math.min(100, newMetrics.nutrition + fallbackTwist.effect.nutrition));
+        if (fallbackTwist.effect.stability) newMetrics.stability = Math.max(0, Math.min(100, newMetrics.stability + fallbackTwist.effect.stability));
+
+        return {
+          ...prev,
+          activePlotTwist: fallbackTwist,
+          plotTwistTimer: fallbackTwist.duration,
+          plotTwistsTriggered: prev.plotTwistsTriggered + 1,
+          metrics: newMetrics,
+        };
+      });
+
+      // Show the plot twist announcement with bonus condition as science text (if available)
+      if (fallbackTwist.bonusCondition) {
+        showAnnouncement(`${fallbackTwist.icon} ${fallbackTwist.name}`, 'plot_twist', fallbackTwist.bonusCondition);
+      } else {
+        showAnnouncement(`${fallbackTwist.icon} ${fallbackTwist.name}`, 'plot_twist');
+      }
+      triggerScreenShake(12);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     }
-    triggerScreenShake(12);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-  }, [showAnnouncement, triggerScreenShake, userMode]);
+  }, [showAnnouncement, triggerScreenShake, userMode, vrfEnabled, generateFairPlotTwist, gameState.gameMode]);
 
   const startGame = useCallback((mode: GameMode = 'classic') => {
     const morningCondition = mode === 'life' ? getRandomMorningCondition() : 'normal_day';
@@ -996,5 +1061,9 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
     getStabilityZone: () => getStabilityZone(gameState.stability),
     getTimePhase: () => getTimePhase(gameState.timer),
     getMorningConditionConfig: () => getMorningConditionConfig(gameState.morningCondition),
+    // VRF Functions
+    enableVRF: () => setVrfEnabled(true),
+    disableVRF: () => setVrfEnabled(false),
+    isVRFEnabled: vrfEnabled,
   };
 };
