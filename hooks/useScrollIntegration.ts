@@ -1,24 +1,8 @@
 import { useState, useCallback, useEffect } from 'react';
+import { useAccount, useContractWrite, useWaitForTransactionReceipt } from 'wagmi';
 import { OnchainAchievement, AchievementType, GameState } from '@/types/game';
-
-// Minimal Scroll contract interface (to be deployed)
-const SCROLL_CONTRACT_ABI = [
-  {
-    name: 'mintAchievement',
-    type: 'function',
-    inputs: [
-      { name: 'player', type: 'address' },
-      { name: 'achievementId', type: 'uint256' },
-    ],
-    outputs: [{ name: 'tokenId', type: 'uint256' }],
-  },
-  {
-    name: 'getPlayerAchievements',
-    type: 'function',
-    inputs: [{ name: 'player', type: 'address' }],
-    outputs: [{ name: 'achievements', type: 'uint256[]' }],
-  },
-];
+import { GLUCOSE_WARS_ACHIEVEMENTS_ABI } from '@/utils/contractABIs';
+import { GLUCOSE_WARS_ACHIEVEMENTS } from '@/utils/contractAddresses';
 
 const ACHIEVEMENT_DEFINITIONS: Record<AchievementType, OnchainAchievement> = {
   victory_classic: {
@@ -72,34 +56,35 @@ const ACHIEVEMENT_DEFINITIONS: Record<AchievementType, OnchainAchievement> = {
 };
 
 export const useScrollIntegration = () => {
-  const [userAddress, setUserAddress] = useState<string | null>(null);
+  const { address, isConnected } = useAccount();
   const [achievements, setAchievements] = useState<OnchainAchievement[]>(
     Object.values(ACHIEVEMENT_DEFINITIONS)
   );
-  const [isConnected, setIsConnected] = useState(false);
-  const [isMinting, setIsMinting] = useState(false);
-  const [scrollBalance, setScrollBalance] = useState(0);
+  const [mintingAchievementId, setMintingAchievementId] = useState<AchievementType | null>(null);
 
-  // Connect to Scroll wallet
-  const connectWallet = useCallback(async () => {
-    try {
-      // Placeholder: integrate with wagmi/viem for real wallet connection
-      // For now, generate a mock address for demonstration
-      const mockAddress = `0x${Math.random().toString(16).slice(2, 42)}`;
-      setUserAddress(mockAddress);
-      setIsConnected(true);
-      return mockAddress;
-    } catch (error) {
-      console.error('Failed to connect wallet:', error);
-      return null;
-    }
-  }, []);
+  // Get achievement index for contract call
+  const getAchievementIndex = (id: AchievementType): number => {
+    return achievements.findIndex(a => a.id === id);
+  };
 
-  // Disconnect wallet
-  const disconnectWallet = useCallback(() => {
-    setUserAddress(null);
-    setIsConnected(false);
-  }, []);
+  // Contract write hook for minting
+  const {
+    writeContract,
+    data: writeHash,
+    isPending: isWritePending,
+    error: writeError,
+  } = useContractWrite();
+
+  // Wait for transaction receipt
+  const {
+    isLoading: isConfirming,
+    isSuccess: isConfirmed,
+  } = useWaitForTransactionReceipt({
+    hash: writeHash,
+  });
+
+  // Define isMinting based on contract write state
+  const isMinting = isWritePending || isConfirming;
 
   // Check if achievement should be unlocked based on game result
   const evaluateAchievements = useCallback((gameState: GameState) => {
@@ -171,36 +156,77 @@ export const useScrollIntegration = () => {
   // Mint NFT for unlocked achievement (Scroll Sepolia)
   const mintAchievementNFT = useCallback(
     async (achievementId: AchievementType) => {
-      if (!userAddress || !isConnected) {
+      if (!address || !isConnected) {
         console.error('Wallet not connected');
         return null;
       }
 
-      setIsMinting(true);
-      try {
-        // Placeholder: implement with wagmi/viem contract write
-        // Mock token ID generation
-        const mockTokenId = `0x${Math.random().toString(16).slice(2, 18)}`;
-
-        // Update achievement with token ID
-        setAchievements(prev =>
-          prev.map(a =>
-            a.id === achievementId
-              ? { ...a, tokenId: mockTokenId }
-              : a
-          )
-        );
-
-        return mockTokenId;
-      } catch (error) {
-        console.error('Failed to mint NFT:', error);
+      // Check if achievement is already minted
+      const achievement = achievements.find(a => a.id === achievementId);
+      if (!achievement?.unlocked) {
+        console.error('Cannot mint NFT for locked achievement:', achievementId);
         return null;
-      } finally {
-        setIsMinting(false);
+      }
+
+      if (achievement.tokenId) {
+        console.log('NFT already minted for achievement:', achievementId);
+        return achievement.tokenId; // Return existing token ID
+      }
+
+      setMintingAchievementId(achievementId);
+
+      try {
+        const achievementIndex = getAchievementIndex(achievementId);
+        if (achievementIndex === -1) {
+          console.error('Achievement not found:', achievementId);
+          setMintingAchievementId(null);
+          return null;
+        }
+
+        // Call contract write
+        // Privacy mode: 0 = public, 1 = private, 2 = healthcare_only
+        const privacyMode = 0; // Public by default (can be enhanced with privacy settings)
+
+        writeContract({
+          address: GLUCOSE_WARS_ACHIEVEMENTS.address as `0x${string}`,
+          abi: GLUCOSE_WARS_ACHIEVEMENTS_ABI,
+          functionName: 'mintAchievement',
+          args: [BigInt(achievementIndex), privacyMode] as [bigint, number], // Type assertion to match ABI: uint256, uint8
+        });
+
+        return achievementId; // Return achievement ID, actual token ID comes from event
+      } catch (error) {
+        console.error('Failed to initiate mint:', error);
+        setMintingAchievementId(null);
+        return null;
       }
     },
-    [userAddress, isConnected]
+    [address, isConnected, achievements, writeContract, getAchievementIndex]
   );
+
+  // Handle successful mint confirmation
+  useEffect(() => {
+    if (isConfirmed && mintingAchievementId && writeHash) {
+      // For now, storing the transaction hash. In production, we'd decode the event logs
+      // to get the actual token ID from the AchievementMinted event
+      setAchievements(prev =>
+        prev.map(a =>
+          a.id === mintingAchievementId
+            ? { ...a, tokenId: writeHash, unlocked: true }
+            : a
+        )
+      );
+      setMintingAchievementId(null);
+    }
+  }, [isConfirmed, mintingAchievementId, writeHash]);
+
+  // Handle mint errors
+  useEffect(() => {
+    if (writeError && mintingAchievementId) {
+      console.error('Mint failed:', writeError);
+      setMintingAchievementId(null);
+    }
+  }, [writeError, mintingAchievementId]);
 
   // Batch mint multiple achievements
   const mintAchievements = useCallback(
@@ -219,13 +245,10 @@ export const useScrollIntegration = () => {
   }, [achievements]);
 
   return {
-    userAddress,
+    userAddress: address,
     isConnected,
     isMinting,
     achievements,
-    scrollBalance,
-    connectWallet,
-    disconnectWallet,
     evaluateAchievements,
     mintAchievementNFT,
     mintAchievements,
