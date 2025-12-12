@@ -21,7 +21,7 @@ export const MODE_REFLECTIONS: Record<UserMode, ReflectionMessage[]> = {
     },
     {
       trigger: 'balanced_choice',
-      text: 'You\\'re finding YOUR body\\'s balance.',
+      text: 'You\'re finding YOUR body\'s balance.',
       science: 'Everyone responds differently to foods—notice your patterns.',
     },
     {
@@ -31,7 +31,7 @@ export const MODE_REFLECTIONS: Record<UserMode, ReflectionMessage[]> = {
     },
     {
       trigger: 'optimal_swipe',
-      text: 'Perfect timing! You\\re learning what your body needs.',
+      text: 'Perfect timing! You\'re learning what your body needs.',
       science: 'Consistency builds better glucose patterns over time.',
     },
   ],
@@ -39,7 +39,7 @@ export const MODE_REFLECTIONS: Record<UserMode, ReflectionMessage[]> = {
     {
       trigger: 'ally_consumed',
       text: 'See the glucose spike from carbs?',
-      science: 'Their insulin works 15 mins later—that\\'s why timing matters.',
+      science: 'Their insulin works 15 mins later—that\'s why timing matters.',
     },
     {
       trigger: 'enemy_rejected',
@@ -70,13 +70,13 @@ export const MODE_REFLECTIONS: Record<UserMode, ReflectionMessage[]> = {
     },
     {
       trigger: 'enemy_rejected',
-      text: 'Pure sugar hits the bloodstream fast—that\\'s the spike.',
+      text: 'Pure sugar hits the bloodstream fast—that\'s the spike.',
       science: 'Refined carbs have no fiber to slow absorption.',
     },
     {
       trigger: 'balanced_choice',
       text: 'Balance is the key to stable glucose.',
-      science: 'No food is "bad"—it\\'s about balance and timing.',
+      science: 'No food is "bad"—it\'s about balance and timing.',
     },
     {
       trigger: 'pairing',
@@ -85,7 +85,7 @@ export const MODE_REFLECTIONS: Record<UserMode, ReflectionMessage[]> = {
     },
     {
       trigger: 'optimal_swipe',
-      text: 'You\\'re understanding glucose management through experience.',
+      text: 'You\'re understanding glucose management through experience.',
       science: 'This is how 1 in 10 people manage health daily.',
     },
   ],

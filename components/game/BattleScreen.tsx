@@ -362,25 +362,25 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
             />
             {/* Announcement overlay */}
             {gameState.announcement && (
-              <View 
+              <View
                 className="mx-2 mt-2 px-3 py-2 rounded-xl items-center"
                 style={{
-                  backgroundColor: gameState.announcementType === 'plot_twist' 
-                    ? 'rgba(168, 85, 247, 0.9)' 
+                  backgroundColor: gameState.announcementType === 'plot_twist'
+                    ? 'rgba(168, 85, 247, 0.9)'
                     : gameState.announcementType === 'reflection'
                       ? 'rgba(34, 211, 238, 0.9)'
-                      : gameState.announcementType === 'error' 
-                        ? 'rgba(239, 68, 68, 0.9)' 
+                      : gameState.announcementType === 'error'
+                        ? 'rgba(239, 68, 68, 0.9)'
                         : gameState.announcementType === 'success'
                           ? 'rgba(34, 197, 94, 0.9)'
                           : 'rgba(0, 0, 0, 0.9)',
                   borderWidth: 2,
-                  borderColor: gameState.announcementType === 'plot_twist' 
-                    ? '#a855f7' 
+                  borderColor: gameState.announcementType === 'plot_twist'
+                    ? '#a855f7'
                     : gameState.announcementType === 'reflection'
                       ? '#06b6d4'
-                      : gameState.announcementType === 'error' 
-                        ? '#ef4444' 
+                      : gameState.announcementType === 'error'
+                        ? '#ef4444'
                         : gameState.announcementType === 'success'
                           ? '#22c55e'
                           : '#f59e0b',
@@ -391,7 +391,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
                 </Text>
                 {gameState.announcementScience && (
                   <Text className="text-gray-100 text-xs text-center italic leading-4 mt-1">
-                    💡 {gameState.announcementScience}
+                    {gameState.announcementScience}
                   </Text>
                 )}
               </View>

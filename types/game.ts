@@ -80,7 +80,7 @@ export interface MorningConditionConfig {
 }
 
 // Plot twist events
-export type PlotTwistType = 
+export type PlotTwistType =
   | 'surprise_meeting'
   | 'stomach_bug'
   | 'heat_wave'
@@ -91,7 +91,30 @@ export type PlotTwistType =
   | 'social_lunch'
   | 'afternoon_slump'
   | 'temptation_wave'
-  | 'health_check';
+  | 'health_check'
+  | 'late_night_urge'
+  | 'sleep_debt'
+  | 'work_stress'
+  | 'school_day_event'
+  | 'sick_day_event'
+  | 'sports_day_event'
+  | 'travel_day_event'
+  | 'birthday_party_event'
+  | 'medication_event'
+  | 'bedtime_event'
+  | 'hypo_event'
+  | 'hyper_event'
+  | 'insulin_event'
+  | 'learning_opportunity1'
+  | 'learning_opportunity2'
+  | 'learning_opportunity3'
+  | 'learning_opportunity4'
+  | 'learning_opportunity5'
+  | 'learning_opportunity6'
+  | 'learning_opportunity7'
+  | 'learning_opportunity8'
+  | 'learning_opportunity9'
+  | 'learning_opportunity10';
 
 export interface PlotTwist {
   id: PlotTwistType;

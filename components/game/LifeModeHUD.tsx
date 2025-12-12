@@ -621,7 +621,7 @@ export const LifeModeFooter: React.FC<{
   onRations: () => void;
   morningCondition?: MorningCondition;
   announcement?: string | null;
-  announcementType?: 'info' | 'success' | 'warning' | 'error' | 'plot_twist';
+  announcementType?: 'info' | 'success' | 'warning' | 'error' | 'plot_twist' | 'joke' | 'fact' | 'special_mode' | 'reflection';
 }> = ({ exerciseCharges, rationCharges, onExercise, onRations, morningCondition, announcement, announcementType }) => {
   const conditionConfig = MORNING_CONDITIONS.find(c => c.id === morningCondition);
   const exerciseGlowAnim = useRef(new Animated.Value(0.3)).current;
@@ -659,6 +659,10 @@ export const LifeModeFooter: React.FC<{
       case 'warning': return { bg: '#f59e0b', border: '#fbbf24', icon: '⚠️' };
       case 'error': return { bg: '#ef4444', border: '#f87171', icon: '❌' };
       case 'plot_twist': return { bg: '#a855f7', border: '#c084fc', icon: '🎭' };
+      case 'reflection': return { bg: '#06b6d4', border: '#22d3ee', icon: '💡' };
+      case 'joke': return { bg: '#a78bfa', border: '#c4b5fd', icon: '😄' };
+      case 'fact': return { bg: '#3b82f6', border: '#93c5fd', icon: '📚' };
+      case 'special_mode': return { bg: '#ec4899', border: '#f472b6', icon: '✨' };
       default: return { bg: '#38bdf8', border: '#7dd3fc', icon: '📢' };
     }
   };

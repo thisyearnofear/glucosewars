@@ -14,7 +14,7 @@ interface BattleHUDProps {
   exerciseCharges: number;
   rationCharges: number;
   announcement: string | null;
-  announcementType: 'info' | 'success' | 'warning' | 'error' | 'plot_twist';
+  announcementType: 'info' | 'success' | 'warning' | 'error' | 'plot_twist' | 'joke' | 'fact' | 'special_mode' | 'reflection';
   onExercise: () => void;
   onRations: () => void;
   isPaused?: boolean;

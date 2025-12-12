@@ -36,6 +36,7 @@ import {
   TIME_PHASES,
   MORNING_CONDITIONS,
   PLOT_TWISTS,
+  MODE_PLOT_TWISTS,
   INITIAL_METRICS,
   METRIC_DRAIN_RATES,
   SPECIAL_MODES,
@@ -211,14 +212,14 @@ const initialGameState: GameState = {
 export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) => void, tierConfig?: any, userMode?: UserMode) => {
    const [gameState, setGameState] = useState<GameState>(initialGameState);
   
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const spawnRef = useRef<NodeJS.Timeout | null>(null);
-  const moveRef = useRef<NodeJS.Timeout | null>(null);
-  const announcementRef = useRef<NodeJS.Timeout | null>(null);
-  const comboTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const plotTwistRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<number | null>(null);
+  const spawnRef = useRef<number | null>(null);
+  const moveRef = useRef<number | null>(null);
+  const announcementRef = useRef<number | null>(null);
+  const comboTimerRef = useRef<number | null>(null);
+  const plotTwistRef = useRef<number | null>(null);
 
-  const showAnnouncement = useCallback((text: string, type: 'info' | 'success' | 'warning' | 'error' | 'plot_twist' | 'reflection' | 'fact' = 'info', science?: string) => {
+  const showAnnouncement = useCallback((text: string, type: 'info' | 'success' | 'warning' | 'error' | 'plot_twist' | 'joke' | 'fact' | 'special_mode' | 'reflection' = 'info', science?: string) => {
     setGameState(prev => ({ ...prev, announcement: text, announcementType: type, announcementScience: science || null }));
     
     if (announcementRef.current) clearTimeout(announcementRef.current);
@@ -238,21 +239,25 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
 
   // Trigger a plot twist (Life Mode only)
   const triggerPlotTwist = useCallback(() => {
-    const availableTwists = PLOT_TWISTS.filter(t => Math.random() > 0.3); // Random selection
+    // Use mode-specific plot twists if userMode is available, otherwise use default
+    const availableTwists = userMode
+      ? MODE_PLOT_TWISTS[userMode].filter(t => Math.random() > 0.3) // Random selection
+      : PLOT_TWISTS.filter(t => Math.random() > 0.3); // Use default for backward compatibility
+
     if (availableTwists.length === 0) return;
-    
+
     const twist = availableTwists[Math.floor(Math.random() * availableTwists.length)];
-    
+
     setGameState(prev => {
       if (prev.gameMode !== 'life' || prev.activePlotTwist || prev.plotTwistsTriggered >= 2) return prev;
-      
+
       // Apply immediate effect
       const newMetrics = { ...prev.metrics };
       if (twist.effect.energy) newMetrics.energy = Math.max(0, Math.min(100, newMetrics.energy + twist.effect.energy));
       if (twist.effect.hydration) newMetrics.hydration = Math.max(0, Math.min(100, newMetrics.hydration + twist.effect.hydration));
       if (twist.effect.nutrition) newMetrics.nutrition = Math.max(0, Math.min(100, newMetrics.nutrition + twist.effect.nutrition));
       if (twist.effect.stability) newMetrics.stability = Math.max(0, Math.min(100, newMetrics.stability + twist.effect.stability));
-      
+
       return {
         ...prev,
         activePlotTwist: twist,
@@ -261,11 +266,16 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
         metrics: newMetrics,
       };
     });
-    
-    showAnnouncement(`${twist.icon} ${twist.name}`, 'plot_twist');
+
+    // Show the plot twist announcement with bonus condition as science text (if available)
+    if (twist.bonusCondition) {
+      showAnnouncement(`${twist.icon} ${twist.name}`, 'plot_twist', twist.bonusCondition);
+    } else {
+      showAnnouncement(`${twist.icon} ${twist.name}`, 'plot_twist');
+    }
     triggerScreenShake(12);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-  }, [showAnnouncement, triggerScreenShake]);
+  }, [showAnnouncement, triggerScreenShake, userMode]);
 
   const startGame = useCallback((mode: GameMode = 'classic') => {
     const morningCondition = mode === 'life' ? getRandomMorningCondition() : 'normal_day';
@@ -453,7 +463,7 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
   // Plot twist trigger (Life Mode) - trigger at random times
   useEffect(() => {
     if (!gameState.isGameActive || gameState.gameMode !== 'life') return;
-    
+
     // Schedule plot twists at random intervals
     const scheduleNextTwist = () => {
       const delay = 15000 + Math.random() * 20000; // Between 15-35 seconds
@@ -463,13 +473,13 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
         }
       }, delay);
     };
-    
+
     scheduleNextTwist();
-    
+
     return () => {
       if (plotTwistRef.current) clearTimeout(plotTwistRef.current);
     };
-  }, [gameState.isGameActive, gameState.gameMode, triggerPlotTwist]);
+  }, [gameState.isGameActive, gameState.gameMode, triggerPlotTwist, userMode]);
 
   // Spawn foods
   useEffect(() => {
