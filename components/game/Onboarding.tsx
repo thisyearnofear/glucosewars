@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, Animated, Dimensions, ActivityIndicator } from 'react-native';
 import { ControlMode, GameMode } from '@/types/game';
+import { HealthProfile } from '@/types/health';
 
 const { width, height } = Dimensions.get('window');
 
@@ -9,6 +10,7 @@ interface OnboardingProps {
   onSkip: (controlMode: ControlMode) => void;
   defaultControlMode?: ControlMode;
   gameMode: GameMode;
+  healthProfile?: HealthProfile;
 }
 
 interface OnboardingStep {
@@ -27,9 +29,9 @@ interface OnboardingStep {
 // Classic mode steps (2 directions)
 const CLASSIC_STEPS: OnboardingStep[] = [
   {
-    title: 'THE KINGDOM AWAITS',
-    subtitle: 'Your body is a realm...',
-    content: 'Food armies march toward your castle. Rally allies. Banish invaders.',
+    title: 'WARM-UP ROUND',
+    subtitle: 'Practice your swipes...',
+    content: 'This is a 30-second tutorial to get comfortable with the controls.\nFood armies march toward your castle. Rally allies. Banish invaders.',
     emoji: '🏰',
   },
   {
@@ -53,6 +55,16 @@ const CLASSIC_STEPS: OnboardingStep[] = [
     direction: 'down',
     directionColor: '#ef4444',
     directionLabel: '👇 SWIPE DOWN',
+  },
+  {
+    title: 'OFFENCE > DEFENCE',
+    subtitle: 'Protect your kingdom\'s health',
+    content: '💎 mg/dL = milligrams per deciliter\n🎯 Target: 70-140 mg/dL [blood sugar]\n🏃High sugar? Exercise lowers it!\n😴 Low energy? Healthy foods raise it steadily.',
+    emoji: '💡',
+    foods: ['🥦', '🍎', '🐟'],  // Healthy food examples
+    direction: 'up',
+    directionColor: '#22c55e',
+    directionLabel: '👆 HEALTHY',
   },
   {
     title: 'CHOOSE CONTROLS',
@@ -120,6 +132,12 @@ const LIFE_MODE_STEPS: OnboardingStep[] = [
     emoji: '⚔️',
   },
   {
+    title: 'HEALTH EDUCATION',
+    subtitle: 'Understand your kingdom\'s health',
+    content: 'mg/dL = milligrams per deciliter - measures blood sugar.\nTarget: 70-140 mg/dL\nHigh sugar? Exercise lowers it!\nLow energy? Healthy foods raise it steadily.',
+    emoji: '💡',
+  },
+  {
     title: 'CHOOSE CONTROLS',
     subtitle: 'How will you fight?',
     content: '',
@@ -128,7 +146,7 @@ const LIFE_MODE_STEPS: OnboardingStep[] = [
   },
 ];
 
-export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onSkip, defaultControlMode = 'swipe', gameMode }) => {
+export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onSkip, defaultControlMode = 'swipe', gameMode, healthProfile }) => {
   const ONBOARDING_STEPS = gameMode === 'life' ? LIFE_MODE_STEPS : CLASSIC_STEPS;
   
   const [currentStep, setCurrentStep] = useState(0);
@@ -260,6 +278,25 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onSkip, defa
       setCurrentStep(prev => prev + 1);
     });
   };
+  
+  const handleBack = () => {
+    if (currentStep === 0) return;
+    
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 0.9,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setCurrentStep(prev => prev - 1);
+    });
+  };
 
   const handleSelectControl = (mode: ControlMode) => {
     Animated.timing(fadeAnim, {
@@ -302,16 +339,15 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onSkip, defa
   
   // Get direction arrow transform
   const getDirectionTransform = () => {
-    if (!step.direction) return {};
     const offset = directionArrowAnim.interpolate({
       inputRange: [0, 1],
       outputRange: [0, step.direction === 'up' ? -15 : step.direction === 'down' ? 15 : step.direction === 'left' ? -15 : 15],
     });
     
     if (step.direction === 'up' || step.direction === 'down') {
-      return { translateY: offset };
+      return [{ translateY: offset }];
     }
-    return { translateX: offset };
+    return [{ translateX: offset }];
   };
 
   return (
@@ -408,7 +444,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onSkip, defa
               backgroundColor: `${step.directionColor}20`,
               borderWidth: 2,
               borderColor: step.directionColor,
-              transform: [getDirectionTransform()],
+              transform: getDirectionTransform(),
             }}
           >
             <Text style={{ color: step.directionColor, fontSize: 16, fontWeight: 'bold', textAlign: 'center' }}>
@@ -502,38 +538,66 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onSkip, defa
 
         {/* Next button */}
         {!isLastStep && (
-          <View style={{ alignItems: 'center' }}>
-            <TouchableOpacity
-              onPress={handleNext}
-              style={{
-                marginTop: 24,
-                backgroundColor: `${themeColor}E6`,
-                paddingHorizontal: 32,
-                paddingVertical: 12,
-                borderRadius: 24,
-                shadowColor: themeColor,
-                shadowOffset: { width: 0, height: 0 },
-                shadowOpacity: 0.4,
-                shadowRadius: 12,
-              }}
-              activeOpacity={0.8}
-            >
-              <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>NEXT</Text>
-            </TouchableOpacity>
-            
-            {/* Skip button below Next */}
-            <TouchableOpacity
-              onPress={() => onSkip(selectedControlMode)}
-              style={{ marginTop: 12 }}
-            >
-              <Text style={{ color: '#6b7280', fontSize: 14 }}>Skip Tutorial</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            onPress={handleNext}
+            style={{
+              marginTop: 24,
+              backgroundColor: `${themeColor}E6`,
+              paddingHorizontal: 32,
+              paddingVertical: 12,
+              borderRadius: 24,
+              shadowColor: themeColor,
+              shadowOffset: { width: 0, height: 0 },
+              shadowOpacity: 0.4,
+              shadowRadius: 12,
+            }}
+            activeOpacity={0.8}
+          >
+            <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>NEXT</Text>
+          </TouchableOpacity>
         )}
-      </Animated.View>
 
-      {/* Step dots */}
-      <View style={{ position: 'absolute', bottom: 32, flexDirection: 'row' }}>
+        {/* Skip button */}
+        {!isLastStep && (
+          <TouchableOpacity
+            onPress={() => onSkip(selectedControlMode)}
+            style={{
+              marginTop: 8,
+              backgroundColor: 'rgba(99, 102, 241, 0.2)',
+              paddingHorizontal: 32,
+              paddingVertical: 10,
+              borderRadius: 24,
+              borderWidth: 1.5,
+              borderColor: '#6366f1',
+            }}
+            activeOpacity={0.8}
+          >
+            <Text style={{ color: '#a5b4fc', fontWeight: 'bold', fontSize: 14 }}>SKIP</Text>
+          </TouchableOpacity>
+        )}
+
+        {/* Back button */}
+        {currentStep > 0 && (
+          <TouchableOpacity
+            onPress={handleBack}
+            style={{
+              marginTop: 12,
+              backgroundColor: 'rgba(168, 85, 247, 0.2)',
+              paddingHorizontal: 32,
+              paddingVertical: 10,
+              borderRadius: 24,
+              borderWidth: 1.5,
+              borderColor: '#a855f7',
+            }}
+            activeOpacity={0.8}
+          >
+            <Text style={{ color: '#d8b4fe', fontWeight: 'bold', fontSize: 14 }}>BACK</Text>
+          </TouchableOpacity>
+        )}
+        </Animated.View>
+
+        {/* Step dots */}
+        <View style={{ position: 'absolute', bottom: 32, flexDirection: 'row' }}>
         {ONBOARDING_STEPS.map((_, i) => (
           <View
             key={i}
@@ -546,7 +610,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onSkip, defa
             }}
           />
         ))}
-      </View>
+        </View>
     </View>
   );
 };

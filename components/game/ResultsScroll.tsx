@@ -1,7 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, Animated, Share } from 'react-native';
-import { BodyMetrics, GameMode, MorningCondition } from '@/types/game';
+import { BodyMetrics, GameMode, MorningCondition, GameState } from '@/types/game';
+import { HealthProfile } from '@/types/health';
 import { MORNING_CONDITIONS } from '@/constants/gameConfig';
+import { useScrollIntegration } from '@/hooks/useScrollIntegration';
+import { ScrollIntegration } from './ScrollIntegration';
+import { GameTier } from '@/constants/gameTiers';
 
 // Fun glucose facts and tips
 const GLUCOSE_FACTS = [
@@ -38,6 +42,10 @@ interface ResultsScrollProps {
   gameMode?: GameMode;
   finalMetrics?: BodyMetrics;
   morningCondition?: MorningCondition;
+  gameState?: GameState;
+  healthProfile?: HealthProfile;
+  tier?: GameTier;
+  dexcomOption?: boolean;
 }
 
 export const ResultsScroll: React.FC<ResultsScrollProps> = ({
@@ -53,13 +61,29 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
   gameMode = 'classic',
   finalMetrics,
   morningCondition,
+  gameState,
+  healthProfile,
+  tier,
+  dexcomOption,
 }) => {
   const isVictory = result === 'victory';
   const scrollAnim = useRef(new Animated.Value(-500)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
   const [showTipsCard, setShowTipsCard] = useState(false);
+  const [showScrollPanel, setShowScrollPanel] = useState(false);
   const [randomFact] = useState(() => GLUCOSE_FACTS[Math.floor(Math.random() * GLUCOSE_FACTS.length)]);
+  const { evaluateAchievements, mintAchievements } = useScrollIntegration();
+
+  // Evaluate achievements when game ends
+  useEffect(() => {
+    if (gameState && isVictory) {
+      const unlockedIds = evaluateAchievements(gameState);
+      if (unlockedIds.length > 0) {
+        setShowScrollPanel(true);
+      }
+    }
+  }, [gameState, isVictory, evaluateAchievements]);
 
   useEffect(() => {
     // Scroll unfurl animation
@@ -184,6 +208,16 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
       {/* Background */}
       <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: isVictory ? 'rgba(217, 119, 6, 0.1)' : 'rgba(239, 68, 68, 0.1)' }} />
 
+      {/* Scroll Integration Panel (Victory only) */}
+      {isVictory && (
+        <View style={{ position: 'absolute', top: 40, left: 16, right: 16 }}>
+          <ScrollIntegration 
+            visible={showScrollPanel}
+            onDismiss={() => setShowScrollPanel(false)}
+          />
+        </View>
+      )}
+
       <Animated.View 
         style={{
           transform: [
@@ -193,6 +227,7 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
           opacity: fadeAnim,
           width: '100%',
           maxWidth: 340,
+          marginTop: showScrollPanel ? 240 : 0,
         }}
       >
         {showTipsCard ? (
@@ -267,6 +302,36 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
                 </View>
               )}
 
+              {/* Health Profile Summary */}
+              {healthProfile && (
+                <View style={{ backgroundColor: 'rgba(59, 130, 246, 0.15)', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(59, 130, 246, 0.5)', marginBottom: 5 }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <Text style={{ color: '#93c5fd', fontWeight: 'bold', fontSize: 11 }}>💉 HEALTH PROFILE</Text>
+                    <Text style={{ color: '#60a5fa', fontWeight: 'bold', fontSize: 12 }}>{healthProfile.currentGlucose} mg/dL</Text>
+                  </View>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 4 }}>
+                    <View style={{ flex: 1, alignItems: 'center' }}>
+                      <Text style={{ color: '#9ca3af', fontSize: 10, marginBottom: 2 }}>Diagnosis</Text>
+                      <Text style={{ color: '#d1d5db', fontWeight: '600', fontSize: 10, textAlign: 'center', textTransform: 'capitalize' }}>
+                        {healthProfile.diabetesType.replace('_', ' ')}
+                      </Text>
+                    </View>
+                    <View style={{ flex: 1, alignItems: 'center' }}>
+                      <Text style={{ color: '#9ca3af', fontSize: 10, marginBottom: 2 }}>Insulin</Text>
+                      <Text style={{ color: '#d1d5db', fontWeight: '600', fontSize: 10, textAlign: 'center', textTransform: 'capitalize' }}>
+                        {healthProfile.insulinType === 'none' ? 'None' : healthProfile.insulinType}
+                      </Text>
+                    </View>
+                    <View style={{ flex: 1, alignItems: 'center' }}>
+                      <Text style={{ color: '#9ca3af', fontSize: 10, marginBottom: 2 }}>Sleep</Text>
+                      <Text style={{ color: '#d1d5db', fontWeight: '600', fontSize: 10, textAlign: 'center' }}>
+                        {Math.round(healthProfile.sleepHours)}h
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              )}
+
               {/* Accuracy & Swipes row */}
               <View style={{ flexDirection: 'row', gap: 5 }}>
                 <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(217, 119, 6, 0.5)' }}>
@@ -284,6 +349,49 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
               </View>
             </View>
 
+            {/* Tier-specific content */}
+            {tier && tier === 'tier1' && gameState && (
+              <View style={{ marginVertical: 16, padding: 12, backgroundColor: 'rgba(79, 70, 229, 0.2)', borderRadius: 10, borderWidth: 1, borderColor: 'rgba(79, 70, 229, 0.4)' }}>
+                <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#fff', marginBottom: 8, textAlign: 'center' }}>
+                  🎯 Warm-Up Complete!
+                </Text>
+                <Text style={{ fontSize: 12, color: '#cbd5e1', textAlign: 'center', marginBottom: 8 }}>
+                  Score: {gameState.score} • Accuracy: {Math.round((gameState.correctSwipes / (gameState.correctSwipes + gameState.incorrectSwipes)) * 100 || 0)}%
+                </Text>
+                <Text style={{ fontSize: 12, color: '#cbd5e1', textAlign: 'center', marginBottom: 8 }}>
+                  {healthProfile ? `Glucose: ${Math.round(healthProfile.currentGlucose)} mg/dL` : 'No glucose data'}
+                </Text>
+                <Text style={{ fontSize: 12, color: '#cbd5e1', textAlign: 'center' }}>
+                  💡 Tip: In Challenge 1, you'll manage real glucose levels!
+                </Text>
+              </View>
+            )}
+
+            {tier && tier === 'tier2' && dexcomOption && (
+              <View style={{ marginVertical: 16, padding: 12, backgroundColor: 'rgba(124, 58, 237, 0.2)', borderRadius: 10, borderWidth: 1, borderColor: 'rgba(124, 58, 237, 0.4)' }}>
+                <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#fff', marginBottom: 8, textAlign: 'center' }}>
+                  🔮 Dexcom Showcase
+                </Text>
+                <Text style={{ fontSize: 12, color: '#cbd5e1', textAlign: 'center', marginBottom: 8 }}>
+                  Want to use REAL data? In Challenge 2, connect your Dexcom to see how your actual glucose compares to this simulated game.
+                </Text>
+                <Text style={{ fontSize: 11, color: '#94a3b8', textAlign: 'center', fontStyle: 'italic' }}>
+                  Learn your patterns. Master your health.
+                </Text>
+              </View>
+            )}
+
+            {tier && tier === 'tier3' && (
+              <View style={{ marginVertical: 16, padding: 12, backgroundColor: 'rgba(16, 185, 129, 0.2)', borderRadius: 10, borderWidth: 1, borderColor: 'rgba(16, 185, 129, 0.4)' }}>
+                <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#fff', marginBottom: 8, textAlign: 'center' }}>
+                  Challenge 2 Complete! 🏆
+                </Text>
+                <Text style={{ fontSize: 12, color: '#cbd5e1', textAlign: 'center' }}>
+                  You've mastered all the mechanics! Ready to mint your achievement NFT?
+                </Text>
+              </View>
+            )}
+
             {/* Buttons */}
             <View>
               <TouchableOpacity
@@ -300,7 +408,9 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
                   <Text style={{ fontSize: 18, marginRight: 6 }}>⚔️</Text>
-                  <Text style={{ color: 'white', fontSize: 15, fontWeight: 'bold' }}>BATTLE AGAIN</Text>
+                  <Text style={{ color: 'white', fontSize: 15, fontWeight: 'bold' }}>
+                    {tier === 'tier1' ? 'NEXT CHALLENGE' : 'PLAY AGAIN'}
+                  </Text>
                 </View>
               </TouchableOpacity>
 

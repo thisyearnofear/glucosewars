@@ -21,6 +21,7 @@ interface BattleHUDProps {
   onPause?: () => void;
   onResume?: () => void;
   onRestart?: () => void;
+  showComboCounter?: boolean;
 }
 
 const getStabilityZone = (stability: number): StabilityZone => {
@@ -230,6 +231,7 @@ export const BattleHUD: React.FC<BattleHUDProps> = ({
   onPause,
   onResume,
   onRestart,
+  showComboCounter = true,
 }) => {
   const zone = getStabilityZone(stability);
   const stabilityColor = getStabilityColor(zone);
@@ -576,7 +578,7 @@ export const BattleHUD: React.FC<BattleHUDProps> = ({
       {/* ═══════════════════════════════════════════════════════════════════════════
           COMBO INDICATOR - FLOATING BANNER
           ═══════════════════════════════════════════════════════════════════════════ */}
-      {comboCount >= 3 && (
+      {(showComboCounter !== false) && comboCount >= 3 && (
         <View style={styles.comboContainer}>
           <Animated.View 
             style={[

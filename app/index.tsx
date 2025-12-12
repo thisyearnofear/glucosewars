@@ -1,22 +1,40 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MainMenu } from '@/components/game/MainMenu';
 import { BattleScreen } from '@/components/game/BattleScreen';
 import { ResultsScroll } from '@/components/game/ResultsScroll';
 import { Onboarding } from '@/components/game/Onboarding';
+import { WelcomeBack } from '@/components/game/WelcomeBack';
+import { MainMenu } from '@/components/game/MainMenu';
 import { useBattleGame } from '@/hooks/useBattleGame';
-import { ControlMode, GameMode } from '@/types/game';
+import { useHealthProfile } from '@/hooks/useHealthProfile';
+import { usePlayerProgress } from '@/hooks/usePlayerProgress';
+import { ControlMode } from '@/types/game';
+import { GAME_TIERS, GameTier } from '@/constants/gameTiers';
 
-type GameScreen = 'menu' | 'onboarding' | 'battle' | 'results';
+type AppScreen = 'menu' | 'onboarding' | 'battle' | 'results';
 
 export default function HomeScreen() {
-  const [currentScreen, setCurrentScreen] = useState<GameScreen>('menu');
+  const { progress, unlockNextTier, updateBestScore, incrementGamesPlayed, setSkipOnboarding, setCurrentTier } =
+    usePlayerProgress();
+
+  const [appScreen, setAppScreen] = useState<AppScreen>('welcome');
   const [controlMode, setControlMode] = useState<ControlMode>('swipe');
-  const [gameMode, setGameMode] = useState<GameMode>('classic');
-  const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false);
+  const [selectedHealthScenario, setSelectedHealthScenario] = useState<string | null>(null);
   const hasTransitionedToResults = useRef(false);
   
+  // Ensure we always have a valid tier config
+  const currentTier = progress.currentTier || 'tier1';
+  const tierConfig = GAME_TIERS[currentTier];
+
+  const {
+    healthProfile,
+    startGlucoseSimulation,
+    stopGlucoseSimulation,
+    logMeal,
+    administerInsulin,
+  } = useHealthProfile(selectedHealthScenario as any || undefined);
+
   const {
     gameState,
     startGame,
@@ -27,108 +45,144 @@ export default function HomeScreen() {
     resumeGame,
     restartGame,
     consumeSavedFood,
-  } = useBattleGame();
+  } = useBattleGame(logMeal, tierConfig);
 
-  const handleOnboardingComplete = (mode: ControlMode) => {
-    setControlMode(mode);
-    setHasSeenOnboarding(true);
-    setCurrentScreen('battle');
-    startGame(gameMode);
-  };
+  // First load: show main menu
+  useEffect(() => {
+    setAppScreen('menu');
+  }, []);
 
-  const handleSkipOnboarding = (mode: ControlMode) => {
-    setControlMode(mode);
-    setHasSeenOnboarding(true);
-    setCurrentScreen('battle');
-    startGame(gameMode);
-  };
-
-  const handleStartBattle = (mode: ControlMode, selectedGameMode: GameMode) => {
-    setControlMode(mode);
-    setGameMode(selectedGameMode);
-    // Show onboarding if first time, otherwise go straight to battle
-    if (!hasSeenOnboarding) {
-      setCurrentScreen('onboarding');
+  const handleStartGame = (controlMode: ControlMode) => {
+    setControlMode(controlMode);
+    
+    // First time user or if they haven't completed onboarding yet
+    // Show onboarding if: never played before OR at the start of a new tier
+    if (progress.gamesPlayed === 0 || !progress.skipOnboarding) {
+      setAppScreen('onboarding');
     } else {
-      setCurrentScreen('battle');
-      startGame(selectedGameMode);
+      startGameForTier();
     }
   };
 
-  const handleRestart = () => {
-    setCurrentScreen('battle');
-    startGame(gameMode);
+  const handleOnboardingComplete = (mode: ControlMode) => {
+    setControlMode(mode);
+    startGameForTier();
   };
 
-  const handleMainMenu = () => {
-    setCurrentScreen('menu');
+  const handleOnboardingSkip = (mode: ControlMode) => {
+    setControlMode(mode);
+    setSkipOnboarding(true);
+    startGameForTier();
+  };
+
+  const startGameForTier = () => {
+    setAppScreen('battle');
+    startGame(tierConfig.gameMode);
+
+    // Start health simulation if tier has health profile
+    if (tierConfig.healthProfile) {
+      startGlucoseSimulation();
+    }
+  };
+
+  const handleGameResult = () => {
+    incrementGamesPlayed();
+    updateBestScore(gameState.score);
+
+    // Check if player won
+    if (gameState.gameResult === 'victory' && tierConfig.requiresWin) {
+      // Unlock next tier if available
+      const tiers: GameTier[] = ['tier1', 'tier2', 'tier3'];
+      const nextTierIndex = tiers.indexOf(progress.currentTier) + 1;
+      if (nextTierIndex < tiers.length) {
+        unlockNextTier(progress.currentTier);
+      }
+    }
+
+    stopGlucoseSimulation();
+    setAppScreen('results');
+  };
+
+  const handleResultsNext = () => {
+    // Auto-advance tier1 to tier2
+    if (currentTier === 'tier1') {
+      setCurrentTier('tier2');
+      setAppScreen('onboarding');
+    } else {
+      // For tier2+, show options
+      setAppScreen('menu');
+    }
+  };
+
+  const handleExit = () => {
+    stopGlucoseSimulation();
+    setAppScreen('welcome');
   };
 
   // Check if game ended and we need to show results - use useEffect to avoid infinite re-renders
   useEffect(() => {
-    if (currentScreen === 'battle' && !gameState.isGameActive && gameState.gameResult && !hasTransitionedToResults.current) {
+    if (appScreen === 'battle' && !gameState.isGameActive && gameState.gameResult && !hasTransitionedToResults.current) {
       hasTransitionedToResults.current = true;
-      const timer = setTimeout(() => {
-        setCurrentScreen('results');
-      }, 100);
-      return () => clearTimeout(timer);
+      handleGameResult();
     }
-  }, [currentScreen, gameState.isGameActive, gameState.gameResult]);
+  }, [appScreen, gameState.isGameActive, gameState.gameResult]);
 
   // Reset transition flag when starting a new game
   useEffect(() => {
-    if (currentScreen === 'battle' && gameState.isGameActive) {
+    if (appScreen === 'battle' && gameState.isGameActive) {
       hasTransitionedToResults.current = false;
     }
-  }, [currentScreen, gameState.isGameActive]);
+  }, [appScreen, gameState.isGameActive]);
 
   // Show main menu
-  if (currentScreen === 'menu') {
+  if (appScreen === 'menu') {
     return (
-      <View className="flex-1">
-        <MainMenu onStartBattle={handleStartBattle} />
+      <View style={{ flex: 1 }}>
+        <MainMenu onStartGame={handleStartGame} />
       </View>
     );
   }
 
-  // Show onboarding (after pressing start, before first game)
-  if (currentScreen === 'onboarding') {
+  // Show onboarding (beautiful original onboarding)
+  if (appScreen === 'onboarding') {
     return (
-      <View className="flex-1">
-        <Onboarding 
+      <View style={{ flex: 1 }}>
+        <Onboarding
           onComplete={handleOnboardingComplete}
-          onSkip={handleSkipOnboarding}
+          onSkip={handleOnboardingSkip}
           defaultControlMode={controlMode}
-          gameMode={gameMode}
+          gameMode={tierConfig.gameMode}
+          healthProfile={healthProfile}
         />
       </View>
     );
   }
 
   // Show results screen
-  if (currentScreen === 'results') {
+  if (appScreen === 'results') {
     return (
-      <ResultsScroll
-        result={gameState.gameResult || 'defeat'}
-        score={gameState.score}
-        glucoseLevel={gameState.stability}
-        correctSwipes={gameState.correctSwipes}
-        incorrectSwipes={gameState.incorrectSwipes}
-        timeInBalanced={gameState.timeInBalanced}
-        comboMax={gameState.comboCount}
-        onPlayAgain={handleRestart}
-        onMainMenu={handleMainMenu}
-        gameMode={gameState.gameMode}
-        finalMetrics={gameState.metrics}
-        morningCondition={gameState.morningCondition}
-      />
+      <View style={{ flex: 1 }}>
+        <ResultsScroll
+          result={gameState.gameResult || 'defeat'}
+          score={gameState.score}
+          glucoseLevel={gameState.stability}
+          correctSwipes={gameState.correctSwipes}
+          incorrectSwipes={gameState.incorrectSwipes}
+          timeInBalanced={gameState.timeInBalanced}
+          comboMax={gameState.comboCount}
+          onPlayAgain={handleResultsNext}
+          onMainMenu={handleExit}
+          gameMode={tierConfig.gameMode}
+          finalMetrics={gameState.metrics}
+          morningCondition={gameState.morningCondition}
+          gameState={gameState}
+          healthProfile={tierConfig.healthProfile ? healthProfile : undefined}
+          tier={currentTier || 'tier1'}
+          dexcomOption={tierConfig.dexcomOption}
+        />
+      </View>
     );
   }
-
-  // Handle exit to main menu
-  const handleExit = () => {
-    setCurrentScreen('menu');
-  };
 
   // Show battle screen
   return (
@@ -141,9 +195,12 @@ export default function HomeScreen() {
         controlMode={controlMode}
         onPause={pauseGame}
         onResume={resumeGame}
-        onRestart={() => restartGame(gameMode)}
+        onRestart={() => startGameForTier()}
         onConsumeSaved={consumeSavedFood}
         onExit={handleExit}
+        healthProfile={tierConfig.healthProfile ? healthProfile : undefined}
+        onAdministerInsulin={administerInsulin}
+        tierConfig={tierConfig}
       />
     </View>
   );

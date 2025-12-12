@@ -18,6 +18,8 @@ import {
   SocialStats,
   SpecialMode,
 } from '@/types/game';
+import { FoodNutrients } from '@/types/health';
+import { getFoodNutrients } from '@/utils/foodToGlucose';
 import {
   GAME_DURATION,
   INITIAL_STABILITY,
@@ -201,7 +203,7 @@ const initialGameState: GameState = {
   shareableMoments: [],
 };
 
-export const useBattleGame = () => {
+export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) => void) => {
   const [gameState, setGameState] = useState<GameState>(initialGameState);
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -707,6 +709,14 @@ export const useBattleGame = () => {
             
             points = Math.round(food.points * 0.5); // Reduced points for eating bad food
             showAnnouncement('⚠️ That wasn\'t healthy!', 'warning');
+          }
+          
+          // Notify health system about food consumption
+          if (onFoodConsumed) {
+            const foodNutrients = getFoodNutrients(food);
+            if (foodNutrients) {
+              onFoodConsumed(foodNutrients);
+            }
           }
           break;
           

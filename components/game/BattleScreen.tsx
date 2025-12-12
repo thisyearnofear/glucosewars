@@ -1,12 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Animated, Dimensions, StyleSheet } from 'react-native';
+import { View, Text, Animated, Dimensions, StyleSheet, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FoodCard } from './FoodCard';
 import { BattleHUD } from './BattleHUD';
 import { LifeModeHeader, LifeModeFooter, LeftSidePanel, RightSidePanel, SIDE_PANEL_WIDTH, LifeModePauseOverlay, SavedFoodsPanel, SocialMeterDisplay } from './LifeModeHUD';
 import { AnimatedBackground } from './AnimatedBackground';
+import { InsulinControl } from './InsulinControl';
 import { GameState, StabilityZone, ControlMode, SwipeDirection, SwipeAction } from '@/types/game';
+import { HealthProfile } from '@/types/health';
 import { COMBO_TIERS } from '@/constants/gameConfig';
+import { getGlucoseZone } from '@/constants/healthScenarios';
+import { TierConfig } from '@/constants/gameTiers';
 
 const { width, height } = Dimensions.get('window');
 
@@ -148,6 +152,9 @@ interface BattleScreenProps {
   onRestart?: () => void;
   onConsumeSaved?: (index: number) => void;
   onExit?: () => void;
+  healthProfile?: HealthProfile;
+  onAdministerInsulin?: (units: number, insulinType?: string) => void;
+  tierConfig?: TierConfig;
 }
 
 const getStabilityZone = (stability: number): StabilityZone => {
@@ -169,10 +176,14 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
   onRestart,
   onConsumeSaved,
   onExit,
+  healthProfile,
+  onAdministerInsulin,
+  tierConfig,
 }) => {
   const shakeAnim = useRef(new Animated.Value(0)).current;
   const zone = getStabilityZone(gameState.stability);
   const insets = useSafeAreaInsets();
+  const [showInsulinControl, setShowInsulinControl] = useState(false);
   
   // Track combo for burst effect
   const prevComboRef = useRef(gameState.comboCount);
@@ -240,6 +251,48 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
       {/* Combo burst effect */}
       <ComboBurst comboCount={comboBurstTrigger} color={comboColor} />
 
+      {/* Health Profile Glucose Display - only show if tier config enables it */}
+      {tierConfig?.showGlucose && healthProfile && (
+        <View style={{ position: 'absolute', top: 40, right: 20, zIndex: 100 }}>
+          <TouchableOpacity
+            onPress={() => setShowInsulinControl(true)}
+            disabled={healthProfile.insulinType === 'none'}
+            style={{
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              borderWidth: 2,
+              borderColor: getGlucoseZone(healthProfile.currentGlucose).color,
+              borderRadius: 12,
+              padding: 12,
+              minWidth: 120,
+            }}
+          >
+            <Text style={{ fontSize: 10, color: '#9ca3af', marginBottom: 4 }}>
+              GLUCOSE
+            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
+              <Text style={{ 
+                fontSize: 20, 
+                fontWeight: 'bold',
+                color: getGlucoseZone(healthProfile.currentGlucose).color,
+              }}>
+                {Math.round(healthProfile.currentGlucose)}
+              </Text>
+              <Text style={{ fontSize: 10, color: '#9ca3af', marginLeft: 4 }}>
+                mg/dL
+              </Text>
+            </View>
+            <Text style={{ fontSize: 8, color: '#6b7280', marginTop: 2 }}>
+              {getGlucoseZone(healthProfile.currentGlucose).label}
+            </Text>
+            {healthProfile.insulinType !== 'none' && (
+              <Text style={{ fontSize: 8, color: '#7c3aed', marginTop: 4, fontWeight: '600' }}>
+                💉 Tap for insulin
+              </Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* Food cards */}
       {gameState.foods.map((food) => (
         <FoodCard
@@ -252,8 +305,8 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
         />
       ))}
 
-      {/* HUD overlay - conditional based on game mode */}
-      {gameState.gameMode === 'life' ? (
+      {/* HUD overlay - conditional based on tier config */}
+      {tierConfig?.showMetrics && gameState.gameMode === 'life' ? (
         <>
           {/* Side Panels - Full height */}
           <LeftSidePanel metrics={gameState.metrics} />
@@ -364,6 +417,17 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
           onPause={onPause}
           onResume={onResume}
           onRestart={onRestart}
+          showComboCounter={tierConfig?.showComboCounter ?? true}
+        />
+      )}
+      
+      {/* Insulin Control Modal */}
+      {healthProfile && onAdministerInsulin && (
+        <InsulinControl
+          healthProfile={healthProfile}
+          onAdministerInsulin={onAdministerInsulin}
+          isVisible={showInsulinControl}
+          onClose={() => setShowInsulinControl(false)}
         />
       )}
     </Animated.View>
