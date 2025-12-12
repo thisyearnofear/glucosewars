@@ -132,12 +132,6 @@ const LIFE_MODE_STEPS: OnboardingStep[] = [
     emoji: '⚔️',
   },
   {
-    title: 'HEALTH EDUCATION',
-    subtitle: 'Understand your kingdom\'s health',
-    content: 'mg/dL = milligrams per deciliter - measures blood sugar.\nTarget: 70-140 mg/dL\nHigh sugar? Exercise lowers it!\nLow energy? Healthy foods raise it steadily.',
-    emoji: '💡',
-  },
-  {
     title: 'CHOOSE CONTROLS',
     subtitle: 'How will you fight?',
     content: '',

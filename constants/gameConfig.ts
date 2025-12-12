@@ -5,6 +5,29 @@ export const INITIAL_STABILITY = 50; // balanced start
 export const COMBO_WINDOW = 2000; // ms to maintain combo
 export const SWIPE_THRESHOLD = 50; // minimum swipe distance
 
+// Penalty structure for missed foods - scales with difficulty
+export const MISS_PENALTIES = {
+  tier1: {
+    // Warm-up: gentle penalties to learn mechanics
+    enemyGetThrough: 8, // stability penalty when enemy food reaches bottom
+    allyMissed: 3, // nutrition penalty when ally food misses
+    comboBreak: true, // breaks combo
+  },
+  tier2: {
+    // Challenge 1: real consequences
+    enemyGetThrough: 15, // stability hits harder
+    allyMissed: 5, // more nutrition penalty
+    comboBreak: true,
+  },
+  tier3: {
+    // Challenge 2: punishing difficulty
+    enemyGetThrough: 25, // severe stability penalty
+    allyMissed: 8, // high nutrition penalty
+    comboBreak: true,
+    metricsAffected: ['energy', 'stability'], // multiple metrics affected
+  },
+};
+
 // Stability zones
 export const STABILITY_ZONES = {
   BALANCED: { min: 40, max: 60, color: '#10b981', name: 'balanced' as StabilityZone },
@@ -14,13 +37,14 @@ export const STABILITY_ZONES = {
   CRITICAL_HIGH: { min: 76, max: 100, color: '#ef4444', name: 'critical-high' as StabilityZone },
 };
 
-// Combo tiers with escalating rewards
+// Combo tiers with escalating rewards - rewards skill consistency
 export const COMBO_TIERS: ComboTier[] = [
   { count: 3, title: '⚔️ DEFENDER!', multiplier: 1.5, color: '#60a5fa' },
   { count: 5, title: '🛡️ GUARDIAN!', multiplier: 2, color: '#a78bfa' },
-  { count: 10, title: '👑 REALM PROTECTOR!', multiplier: 3, color: '#fbbf24' },
-  { count: 15, title: '🔥 LEGENDARY!', multiplier: 4, color: '#f97316' },
-  { count: 20, title: '⭐ GLUCOSE MASTER!', multiplier: 5, color: '#ec4899' },
+  { count: 8, title: '🔥 EXECUTIONER!', multiplier: 2.5, color: '#f59e0b' },
+  { count: 12, title: '👑 REALM PROTECTOR!', multiplier: 3.5, color: '#fbbf24' },
+  { count: 18, title: '⚡ LEGENDARY!', multiplier: 5, color: '#f97316' },
+  { count: 25, title: '🌟 GLUCOSE MASTER!', multiplier: 7, color: '#ec4899' },
 ];
 
 // Food definitions - Allies (swipe UP to rally)
@@ -373,6 +397,7 @@ export const ANNOUNCEMENTS = {
   COMBO_15: ['⭐ LEGENDARY!', '🌟 AMAZING!', '👑 ROYAL PERFORMANCE!'],
   COMBO_20: ['🏆 GLUCOSE MASTER!', '👑 SUPREME DEFENDER!', '🌟 INSULIN WHISPERER!'],
   WRONG_SWIPE: ['❌ WRONG DIRECTION!', '⚠️ WATCH YOUR SWIPE!', '💥 THAT WAS AN ALLY!', '🤦 Oops! Wrong food!'],
+  COMBO_BREAK: ['💔 COMBO BROKEN!', '⚠️ MISSED ONE!', '🔄 START OVER!', '⏸️ Streak lost!'],
   CRITICAL_HIGH: ['🔥 GLUCOSE SPIKE!', '⚠️ TOO HIGH!', '🌋 DANGER ZONE!', '📈 Sugar overload!'],
   CRITICAL_LOW: ['❄️ GLUCOSE CRASH!', '⚠️ TOO LOW!', '🥶 DANGER ZONE!', '📉 Need fuel!'],
   ENEMY_WAVE: ['👹 SUGAR HORDE APPROACHES!', '🍩 DONUT DYNASTY SPOTTED!', '🍬 CANDY INVASION!', '🧁 Cupcake cavalry incoming!'],

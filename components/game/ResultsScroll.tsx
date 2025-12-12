@@ -367,16 +367,19 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
               </View>
             )}
 
-            {tier && tier === 'tier2' && dexcomOption && (
+            {tier && tier === 'tier2' && (
               <View style={{ marginVertical: 16, padding: 12, backgroundColor: 'rgba(124, 58, 237, 0.2)', borderRadius: 10, borderWidth: 1, borderColor: 'rgba(124, 58, 237, 0.4)' }}>
                 <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#fff', marginBottom: 8, textAlign: 'center' }}>
-                  🔮 Dexcom Showcase
+                  💡 Your Glucose Reality Check
                 </Text>
                 <Text style={{ fontSize: 12, color: '#cbd5e1', textAlign: 'center', marginBottom: 8 }}>
-                  Want to use REAL data? In Challenge 2, connect your Dexcom to see how your actual glucose compares to this simulated game.
+                  In this game, you just managed {Math.round(healthProfile?.currentGlucose || 120)} mg/dL. In real life, your glucose changes based on:
+                </Text>
+                <Text style={{ fontSize: 11, color: '#cbd5e1', textAlign: 'center', marginBottom: 8 }}>
+                  🍽️ When you eat • ⏰ Time of day • 🏃 Exercise • 😴 Sleep • 😰 Stress
                 </Text>
                 <Text style={{ fontSize: 11, color: '#94a3b8', textAlign: 'center', fontStyle: 'italic' }}>
-                  Learn your patterns. Master your health.
+                  Real CGM data coming soon. For now: track meals, test regularly, consult your doctor.
                 </Text>
               </View>
             )}
@@ -384,10 +387,15 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
             {tier && tier === 'tier3' && (
               <View style={{ marginVertical: 16, padding: 12, backgroundColor: 'rgba(16, 185, 129, 0.2)', borderRadius: 10, borderWidth: 1, borderColor: 'rgba(16, 185, 129, 0.4)' }}>
                 <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#fff', marginBottom: 8, textAlign: 'center' }}>
-                  Challenge 2 Complete! 🏆
+                  🏆 Advanced Play Mastered!
                 </Text>
-                <Text style={{ fontSize: 12, color: '#cbd5e1', textAlign: 'center' }}>
-                  You've mastered all the mechanics! Ready to mint your achievement NFT?
+                <Text style={{ fontSize: 12, color: '#cbd5e1', textAlign: 'center', marginBottom: 8 }}>
+                  You've learned advanced glucose management. Keep practicing these skills:
+                </Text>
+                <Text style={{ fontSize: 11, color: '#cbd5e1', textAlign: 'center' }}>
+                  ✓ Timing matters (meals, exercise, sleep)
+                  ✓ Balance, not restriction
+                  ✓ Listen to your body's signals
                 </Text>
               </View>
             )}

@@ -39,6 +39,16 @@ Predictable file structure with domain-driven design
 └── ResultsScroll        # Results
 ```
 
+### Game Mechanics: Combo System
+**Skill-based scoring:** Consecutive successful swipes earn escalating multipliers (1.5x → 7x), while missing food breaks combo instantly.
+
+**Tier-scaled penalties** (when food misses):
+- **Tier 1**: -8 stability, -3 nutrition (learning)
+- **Tier 2**: -15 stability, -5 nutrition (real)
+- **Tier 3**: -25 stability, -8 nutrition, -10 energy (punishing)
+
+**Combo milestones**: 3→5→8→12→18→25 swipes unlock progressive multipliers, creating clear progression targets.
+
 ### Key Components
 
 #### Tier Configuration

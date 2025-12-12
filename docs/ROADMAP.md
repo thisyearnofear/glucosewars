@@ -1,46 +1,183 @@
-# GlucoseWars Roadmap: Tiered Progression + Scroll Primitives
+# GlucoseWars Roadmap: User-Centric Personalization
 
-## 🎯 Executive Summary
+## ✅ What We've Built
 
-### Current Architecture (Completed ✅)
+Core game engine complete: tiered progression (3 tiers × 30/60/90s), classic/life game modes, swipe/tap controls, combo system, player progression tracking, onboarding flows, health profile system, results screens with honest messaging. Ready for user personalization.
+
+---
+
+## 🚀 Phase 1: User-Centric Personalization (4-6 weeks)
+
+**Why:** Current game assumes all players manage their own glucose. Reality: many users are caregivers, family members, or learning for general education. Personalizing the narrative keeps the same game engaging for different user types.
+
+### 1.1 User Mode Selection (Week 1-2)
+
+**Goal:** Players define their relationship to diabetes for personalized experience
+
+**Build:**
+- Modal: "Choose Your Role" (appears once before welcome)
+- Three options:
+  - 👤 **Personal** - Managing my own glucose
+  - 👨‍👩‍👧 **Caregiver** - Supporting someone with diabetes
+  - 📚 **Curious** - Learning about glucose/diabetes (future)
+- Store selection in `usePlayerProgress` (never ask again)
+
+**Why it matters:** Caregiver mode is high-engagement (emotional driver) and underserved market.
+
+---
+
+### 1.2 Personalized Onboarding (Week 2-3)
+
+**Personal Mode:** Same current flow (learning is about managing self)
+
+**Caregiver Mode:** Same mechanics, different narrative
+- Health profile: "Tell us about [loved one]"
+- Questions: relation type (child, parent, partner, sibling, friend)
+- Framing: "Understanding their health" vs "Managing your health"
+- Early empathy setup
+
+**Deliverable:** Conditional onboarding steps per mode
+
+---
+
+### 1.3 Mode-Specific Results & Messaging (Week 3-4)
+
+**Personal Mode - Tier2:**
 ```
-Tiered Progression System
-├── Tier 1: Tutorial (30s, controls)
-├── Tier 2: Challenge 1 (60s, health basics)
-└── Tier 3: Challenge 2 (90s, advanced)
+💡 YOU MANAGED: 120 mg/dL
+Your glucose depends on:
+🍽️ Food • ⏰ Timing • 🏃 Exercise • 😴 Sleep • 😰 Stress
+ACTION: Log meals for 3 days, notice patterns
 ```
 
-### Next Evolution: Scroll Primitive Integration
+**Caregiver Mode - Tier2:**
 ```
-Enhanced Architecture
-├── zkEVM Privacy Layer (health data control)
-├── VRF Fairness System (provable randomness)
-└── Selective Disclosure (granular sharing)
+💡 YOU MANAGED THEIR GLUCOSE: 120 mg/dL
+Now you understand:
+✓ Why they need insulin/medication
+✓ How timing affects their body
+✓ Why "just eating healthy" isn't enough
+ACTION: Ask them how daily management feels
 ```
 
-## 📋 Phase 1: Core Tiered Progression (COMPLETED ✅)
+**Personal Mode - Tier3:**
+```
+🏆 ADVANCED PATTERNS MASTERED
+You've learned: timing matters, balance > restriction, listen to your body
+NEXT: Talk with your doctor about adjusting
+```
 
-### ✅ Delivered Components
-- `constants/gameTiers.ts` - Tier configuration
-- `hooks/usePlayerProgress.ts` - Progression tracking
-- `components/game/WelcomeBack.tsx` - Returning player flow
-- `components/game/OnboardingForTier.tsx` - Tier-specific onboarding
-- Refactored `app/index.tsx` - Tier progression logic
-- Enhanced `BattleScreen.tsx` - Config-driven UI
-- Updated `ResultsScroll.tsx` - Tier-specific content
+**Caregiver Mode - Tier3:**
+```
+🏆 ADVANCED UNDERSTANDING ACHIEVED
+You now know: insulin complexity, why scenarios are hard, how to support
+NEXT: Have deeper conversation with loved one
+```
 
-### ✅ Deleted Components
-- `MainMenu.tsx` (400+ lines removed)
-- `HealthProfileSelect.tsx` (modal choice eliminated)
+**Deliverable:** Message templates, conditional rendering per mode
 
-## 🚀 Phase 2: Scroll Primitive Integration (NEXT - 8-12 weeks)
+---
 
-## 🔐 zkEVM Privacy Layer (4-6 weeks)
+### 1.4 In-Game Reflection Points (Week 4-5)
 
-### Level 1: Basic Privacy (Week 1-2)
-**Goal:** Simple privacy toggle with zkEVM encryption
+**Goal:** Weave learning into gameplay, not just end screens
 
-```typescript
+**At Game End:**
+
+**Personal:**
+```
+💡 You paired carbs with protein - smart!
+This slows glucose absorption (real science).
+Pattern: do this before workouts.
+```
+
+**Caregiver:**
+```
+💡 See the glucose spike from carbs?
+Their insulin works 15 mins later.
+This is why timing the meal matters.
+```
+
+**Deliverable:** Post-game reflection system, mode-aware insights
+
+---
+
+### 1.5 Mode-Specific Plot Twists (Week 5-6)
+
+**Personal Mode:**
+- Real scenarios (stress, exercise, timing)
+- Build self-awareness patterns
+
+**Caregiver Mode:**
+- Real caregiver scenarios (school day, sick day, sports, travel)
+- Show compound complexity
+
+**Example:**
+
+**Personal:**
+```
+⚡ STRESS EVENT!
+Cortisol spiking = glucose rises without eating.
+You'll need more insulin or activity.
+```
+
+**Caregiver:**
+```
+⚡ SCHOOL DAY EVENT!
+Stress + activity + late lunch = unpredictable glucose.
+This is why they check blood sugar often.
+```
+
+**Deliverable:** Mode-filtered plot twist selection, scenario messaging
+
+---
+
+## 📅 Timeline
+
+| Week | Deliverable |
+|------|-------------|
+| 1-2 | User mode selection modal + state |
+| 2-3 | Personalized onboarding flows |
+| 3-4 | Results & messaging customization |
+| 4-5 | In-game reflection points |
+| 5-6 | Mode-specific plot twists |
+| 6+ | Testing, refinement, launch |
+
+---
+
+## 🎯 Success Metrics
+
+- **Adoption:** 90%+ select a mode (not skipping)
+- **Caregiver split:** Track how many users choose caregiver mode
+- **Engagement:** Time spent reading results (engagement indicator)
+- **Sharing:** Caregiver users share insights with loved one more
+- **Completion:** 95%+ complete tier2 in their chosen mode
+
+---
+
+## 🔮 Phase 2 Ideas (Post-Phase 1)
+
+- Family leaderboards (personal + caregiver compete together)
+- Healthcare provider sharing (doctor sees what patient/caregiver learned)
+- Multiplayer caregiver mode (multiple people supporting one person)
+- General education mode (public health, diabetes awareness)
+
+---
+
+## 🏆 Why This Works
+
+✅ **Honest:** No false features, builds on existing game
+✅ **Fun:** Same mechanics, deeper meaning = re-engagement
+✅ **Modular:** Clean code, no bloat
+✅ **Inclusive:** Serves actual user base
+✅ **Scalable:** Foundation for future modes
+
+
+🚀 Phase 2: Scroll Primitive Integration (NEXT - 8-12 weeks)
+🔐 zkEVM Privacy Layer (4-6 weeks)
+Level 1: Basic Privacy (Week 1-2)
+Goal: Simple privacy toggle with zkEVM encryption
+
 // Privacy settings interface
 interface PrivacySettings {
   mode: 'standard' | 'private';
@@ -59,20 +196,17 @@ function togglePrivacyMode(mode: PrivacySettings['mode']) {
     storePublicData();
   }
 }
-```
+Deliverables:
 
-**Deliverables:**
-- Privacy toggle in settings
-- zkEVM data encryption
-- Private achievement minting
-- UI privacy indicators (🔒/🌍 badges)
+Privacy toggle in settings
+zkEVM data encryption
+Private achievement minting
+UI privacy indicators (🔒/🌍 badges)
+Complexity: ★☆☆ (2/10)
 
-**Complexity:** ★☆☆ (2/10)
+Level 2: Selective Disclosure (Week 3-4)
+Goal: Granular data sharing controls
 
-### Level 2: Selective Disclosure (Week 3-4)
-**Goal:** Granular data sharing controls
-
-```typescript
 // Enhanced privacy controls
 interface GranularPrivacy {
   glucoseLevels: {
@@ -98,22 +232,18 @@ interface GranularPrivacy {
     />
   )}
 </PrivacyControl>
-```
+Deliverables:
 
-**Deliverables:**
-- Granular privacy controls per data type
-- Healthcare provider address management
-- Access revocation system
-- Privacy dashboard overview
+Granular privacy controls per data type
+Healthcare provider address management
+Access revocation system
+Privacy dashboard overview
+Complexity: ★★☆ (4/10)
 
-**Complexity:** ★★☆ (4/10)
+🎲 VRF Fairness System (3-4 weeks)
+Level 1: Provably Fair Plot Twists (Week 1-2)
+Goal: VRF-verified random events
 
-## 🎲 VRF Fairness System (3-4 weeks)
-
-### Level 1: Provably Fair Plot Twists (Week 1-2)
-**Goal:** VRF-verified random events
-
-```typescript
 // VRF plot twist generation
 async function generateFairPlotTwist(): PlotTwist {
   // Request VRF randomness
@@ -145,20 +275,17 @@ async function generateFairPlotTwist(): PlotTwist {
     />
   )}
 </PlotTwistNotification>
-```
+Deliverables:
 
-**Deliverables:**
-- VRF integration for plot twists
-- Fairness verification UI
-- Onchain proof storage
-- Fairness badge system
+VRF integration for plot twists
+Fairness verification UI
+Onchain proof storage
+Fairness badge system
+Complexity: ★☆☆ (2/10)
 
-**Complexity:** ★☆☆ (2/10)
+Level 2: Comprehensive Fairness (Week 3-4)
+Goal: Full game event verification
 
-### Level 2: Comprehensive Fairness (Week 3-4)
-**Goal:** Full game event verification
-
-```typescript
 // Fairness dashboard
 interface FairnessMetrics {
   verifiedEvents: number;
@@ -186,97 +313,68 @@ function verifyGameIntegrity() {
   verified={fairnessMetrics.verifiedEvents} 
   total={fairnessMetrics.totalEvents}
 />
-```
+Deliverables:
 
-**Deliverables:**
-- Full event verification system
-- Fairness dashboard
-- Challenge/verification mechanics
-- Leaderboard integrity checks
+Full event verification system
+Fairness dashboard
+Challenge/verification mechanics
+Leaderboard integrity checks
+Complexity: ★★☆ (4/10)
 
-**Complexity:** ★★☆ (4/10)
+🔄 Integration Strategy: Keep It Fun
+Core Principles
+Progressive Complexity: Introduce features gradually
+Optional Depth: Advanced features for power users only
+Visual Feedback: Make abstract concepts tangible
+Gameplay First: Never sacrifice fun for features
+Tier-Based Rollout
+Tier 1 (Current):
 
-## 🔄 Integration Strategy: Keep It Fun
-
-### Core Principles
-1. **Progressive Complexity:** Introduce features gradually
-2. **Optional Depth:** Advanced features for power users only
-3. **Visual Feedback:** Make abstract concepts tangible
-4. **Gameplay First:** Never sacrifice fun for features
-
-### Tier-Based Rollout
-
-**Tier 1 (Current):**
-```
 Basic Gameplay
 ├── Simple privacy toggle
 └── Fairness badges (visual only)
-```
+Tier 2 (Next):
 
-**Tier 2 (Next):**
-```
 Health Management
 ├── Granular privacy controls
 ├── VRF plot twists
 └── Fairness verification
-```
+Tier 3 (Advanced):
 
-**Tier 3 (Advanced):**
-```
 Mastery
 ├── Healthcare provider sharing
 ├── Full game verification
 └── Multiplayer fairness
-```
-
-## 📅 Implementation Timeline
-
-### Phase 2A: Privacy Foundation (4 weeks)
-```
+📅 Implementation Timeline
+Phase 2A: Privacy Foundation (4 weeks)
 Week 1-2: Basic zkEVM encryption + privacy toggle
 Week 3-4: Selective disclosure + healthcare sharing
-```
-
-### Phase 2B: Fairness Integration (4 weeks)
-```
+Phase 2B: Fairness Integration (4 weeks)
 Week 5-6: VRF plot twists + fairness badges
 Week 7-8: Full verification + fairness dashboard
-```
-
-### Phase 2C: Polish & Testing (2 weeks)
-```
+Phase 2C: Polish & Testing (2 weeks)
 Week 9-10: Integration testing + UX refinement
-```
+Total: 10 weeks to production-ready
 
-**Total:** 10 weeks to production-ready
-
-## 📊 Complexity vs. Value Analysis
-
-| Feature | Complexity | User Value | Dev Time | Priority |
-|---------|------------|------------|----------|----------|
-| Privacy Toggle | Low | Medium | 1-2w | ✅ High |
-| VRF Plot Twists | Low | High | 1-2w | ✅ High |
-| Selective Disclosure | Medium | High | 3-4w | ✅ High |
-| Fairness Dashboard | Medium | Medium | 3-4w | Medium |
-| Healthcare Sharing | Medium | High | 2-3w | High |
-| Full Verification | High | Medium | 4-6w | Low |
-
-## 🎯 Success Metrics
-
-### Privacy Features
-- **Adoption Rate:** 60%+ of players enable privacy features
-- **Healthcare Sharing:** 15%+ connect with providers
-- **Data Control:** 80%+ understand their privacy settings
-
-### Fairness Features
-- **Verification Rate:** 40%+ verify plot twist fairness
-- **Integrity Score:** 90%+ average game integrity rating
-- **Retention Impact:** 20%+ increase in Tier 3 completion
-
-## 🛠️ Technical Implementation
-
-### zkEVM Integration
-```typescript
+📊 Complexity vs. Value Analysis
+Feature	Complexity	User Value	Dev Time	Priority
+Privacy Toggle	Low	Medium	1-2w	✅ High
+VRF Plot Twists	Low	High	1-2w	✅ High
+Selective Disclosure	Medium	High	3-4w	✅ High
+Fairness Dashboard	Medium	Medium	3-4w	Medium
+Healthcare Sharing	Medium	High	2-3w	High
+Full Verification	High	Medium	4-6w	Low
+🎯 Success Metrics
+Privacy Features
+Adoption Rate: 60%+ of players enable privacy features
+Healthcare Sharing: 15%+ connect with providers
+Data Control: 80%+ understand their privacy settings
+Fairness Features
+Verification Rate: 40%+ verify plot twist fairness
+Integrity Score: 90%+ average game integrity rating
+Retention Impact: 20%+ increase in Tier 3 completion
+🛠️ Technical Implementation
+zkEVM Integration
 // Privacy service
 class HealthDataVault {
   constructor(private zkEVM: ScrollZKEVM) {}
@@ -307,10 +405,7 @@ class HealthDataVault {
     );
   }
 }
-```
-
-### VRF Integration
-```typescript
+VRF Integration
 // Fairness service
 class GameFairness {
   constructor(private vrf: ScrollVRF) {}
@@ -343,12 +438,8 @@ class GameFairness {
     };
   }
 }
-```
-
-## 🎮 UX Integration Examples
-
-### Privacy Control Flow
-```
+🎮 UX Integration Examples
+Privacy Control Flow
 📱 Player Journey
 ├── Settings → Privacy
 │   ├── 🔘 Standard Mode (default)
@@ -357,10 +448,7 @@ class GameFairness {
 │       ├── "Achievements can be minted privately"
 │       └── 👍 Enable Private Mode
 └── Gameplay (unchanged, privacy icons visible)
-```
-
-### Fairness Verification Flow
-```
+Fairness Verification Flow
 🎮 During Gameplay
 ├── Plot Twist Occurs
 │   ├── "🎲 Random Event: Heat Wave!"
@@ -368,62 +456,46 @@ class GameFairness {
 │       └── "✅ This event was provably fair"
 │           └── "View Proof on Scrollscan"
 └── Game Continues (no interruption)
-```
-
-## 📈 Business Impact
-
-### Value Proposition Enhancement
-1. **Privacy as Feature:** "Your health data, your control"
-2. **Fairness as Trust:** "Provably fair gameplay"
-3. **Healthcare Integration:** "Share insights with your doctor"
-4. **Blockchain Utility:** "Real use of zkEVM and VRF"
-
-### Competitive Differentiation
-- **vs Health Apps:** Gamification + real privacy controls
-- **vs Games:** Meaningful health impact + blockchain utility
-- **vs Web3 Games:** Actual utility of zk primitives
-
-## 🎯 Next Steps
-
-### Immediate (Week 1-2)
-```
+📈 Business Impact
+Value Proposition Enhancement
+Privacy as Feature: "Your health data, your control"
+Fairness as Trust: "Provably fair gameplay"
+Healthcare Integration: "Share insights with your doctor"
+Blockchain Utility: "Real use of zkEVM and VRF"
+Competitive Differentiation
+vs Health Apps: Gamification + real privacy controls
+vs Games: Meaningful health impact + blockchain utility
+vs Web3 Games: Actual utility of zk primitives
+🎯 Next Steps
+Immediate (Week 1-2)
 ✅ Research: Scroll zkEVM/VRF documentation
 ✅ Design: Privacy toggle UI/UX
 ✅ Prototype: Basic zkEVM encryption
 ✅ Test: VRF plot twist integration
-```
-
-### Short-term (Week 3-6)
-```
+Short-term (Week 3-6)
 ✅ Implement: Privacy toggle + basic encryption
 ✅ Develop: VRF plot twists + fairness badges
 ✅ Test: End-to-end privacy/fairness flows
 ✅ Refine: UX based on user testing
-```
-
-### Long-term (Week 7-10)
-```
+Long-term (Week 7-10)
 ✅ Enhance: Selective disclosure controls
 ✅ Expand: Full event verification system
 ✅ Integrate: Healthcare provider sharing
 ✅ Launch: Privacy & fairness features
-```
+🏆 Conclusion
+The integration of Scroll's zkEVM and VRF primitives will transform GlucoseWars from a innovative health game into a cutting-edge privacy-preserving health platform with provable fairness. By following a phased approach that introduces complexity gradually, we maintain the fun, intuitive experience while adding sophisticated blockchain features that provide real value to users.
 
-## 🏆 Conclusion
+Key Benefits:
 
-The integration of Scroll's zkEVM and VRF primitives will transform GlucoseWars from a innovative health game into a **cutting-edge privacy-preserving health platform** with provable fairness. By following a phased approach that introduces complexity gradually, we maintain the fun, intuitive experience while adding sophisticated blockchain features that provide real value to users.
+✅ Privacy: Users control their health data
+✅ Fairness: Provably fair gameplay mechanics
+✅ Trust: Verifiable system integrity
+✅ Utility: Meaningful use of blockchain
+✅ Growth: New features attract power users
+Risk Mitigation:
 
-**Key Benefits:**
-- ✅ **Privacy:** Users control their health data
-- ✅ **Fairness:** Provably fair gameplay mechanics
-- ✅ **Trust:** Verifiable system integrity
-- ✅ **Utility:** Meaningful use of blockchain
-- ✅ **Growth:** New features attract power users
-
-**Risk Mitigation:**
-- Start with simple implementations
-- Thorough testing at each phase
-- User education on new concepts
-- Maintain core gameplay experience
-
-This roadmap positions GlucoseWars as a leader in **privacy-preserving health gamification** while maintaining its core mission: making glucose management engaging and accessible to everyone.
+Start with simple implementations
+Thorough testing at each phase
+User education on new concepts
+Maintain core gameplay experience
+This roadmap positions GlucoseWars as a leader in privacy-preserving health gamification while maintaining its core mission: making glucose management engaging and accessible to everyone.

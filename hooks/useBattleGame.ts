@@ -38,6 +38,7 @@ import {
   INITIAL_METRICS,
   METRIC_DRAIN_RATES,
   SPECIAL_MODES,
+  MISS_PENALTIES,
   TIME_SPEED_MODIFIERS,
   MESSAGE_POSITIONS,
 } from '@/constants/gameConfig';
@@ -139,9 +140,10 @@ const createFoodUnit = (definition: FoodDefinition, timePhase?: TimePhase, gameM
 };
 
 const initialGameState: GameState = {
-  // Core
-  score: 0,
-  timer: GAME_DURATION,
+   // Core
+   score: 0,
+   timer: GAME_DURATION,
+   tutorialStep: 0, // Track tutorial progress for tier1
   foods: [],
   isGameActive: false,
   gameResult: null,
@@ -203,8 +205,8 @@ const initialGameState: GameState = {
   shareableMoments: [],
 };
 
-export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) => void) => {
-  const [gameState, setGameState] = useState<GameState>(initialGameState);
+export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) => void, tierConfig?: any) => {
+   const [gameState, setGameState] = useState<GameState>(initialGameState);
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const spawnRef = useRef<NodeJS.Timeout | null>(null);
@@ -513,6 +515,11 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
         let newMetrics = { ...prev.metrics };
         let missedCount = 0;
 
+        // Get tier-specific penalties (fallback to tier1 if tierConfig not provided)
+         const tierKey = (tierConfig?.tier || 'tier1') as keyof typeof MISS_PENALTIES;
+         const penalties = MISS_PENALTIES[tierKey];
+         let comboBreaker = false;
+
         for (const food of prev.foods) {
           if (food.isBeingDragged) {
             updatedFoods.push(food);
@@ -521,29 +528,31 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
 
           const newY = food.y + food.speed;
           
-          // Food reached the gate
+          // Food reached the gate - miss penalty
           if (newY >= food.targetY) {
             missedCount++;
-            // Missed foods affect stability/metrics
+            comboBreaker = true; // All misses break combo
+            
             if (prev.gameMode === 'life') {
-              // In Life Mode, missed foods have negative effects
+              // Life Mode: scale penalties by tier
               if (food.faction === 'enemy') {
-                // Enemy got through - apply negative effects
-                newMetrics.energy = Math.max(0, newMetrics.energy + (food.effects.energy < 0 ? food.effects.energy : -5));
-                newMetrics.hydration = Math.max(0, newMetrics.hydration + (food.effects.hydration < 0 ? food.effects.hydration : -3));
-                newMetrics.nutrition = Math.max(0, newMetrics.nutrition + (food.effects.nutrition < 0 ? food.effects.nutrition : -5));
-                newMetrics.stability = Math.max(0, Math.min(100, newMetrics.stability - Math.abs(food.glucoseImpact)));
+                // Enemy got through - apply tier-scaled penalty
+                newMetrics.stability = Math.max(0, Math.min(100, newMetrics.stability - penalties.enemyGetThrough));
+                // Tier 3 also damages energy
+                if (tierConfig?.tier === 'tier3') {
+                  newMetrics.energy = Math.max(0, newMetrics.energy - 10);
+                }
               } else {
-                // Ally missed - small penalty
-                newMetrics.nutrition = Math.max(0, newMetrics.nutrition - 3);
+                // Ally missed - tier-scaled nutrition penalty
+                newMetrics.nutrition = Math.max(0, newMetrics.nutrition - penalties.allyMissed);
               }
               newStability = newMetrics.stability;
             } else {
-              // Classic mode
+              // Classic mode: tier-scaled stability penalties
               if (food.faction === 'enemy') {
-                newStability = Math.min(100, newStability - food.glucoseImpact);
+                newStability = Math.max(0, newStability - penalties.enemyGetThrough);
               } else {
-                newStability = Math.max(0, newStability - 5);
+                newStability = Math.max(0, newStability - penalties.allyMissed);
               }
             }
           } else {
@@ -551,34 +560,41 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
           }
         }
 
-        // Check for critical stability (Classic mode)
-        if (prev.gameMode === 'classic' && (newStability <= 5 || newStability >= 95)) {
-          if (timerRef.current) clearInterval(timerRef.current);
-          if (spawnRef.current) clearInterval(spawnRef.current);
-          if (moveRef.current) clearInterval(moveRef.current);
-          
-          return {
-            ...prev,
-            foods: updatedFoods,
-            stability: newStability,
-            isGameActive: false,
-            gameResult: 'defeat',
-          };
-        }
+        // Show combo break announcement if streak was lost
+         if (comboBreaker && prev.comboCount > 0) {
+           showAnnouncement(getRandomAnnouncement('COMBO_BREAK'), 'warning');
+         }
 
-        return {
-          ...prev,
-          foods: updatedFoods,
-          stability: newStability,
-          metrics: newMetrics,
-        };
-      });
-    }, 32); // ~30fps
+         // Check for critical stability (Classic mode)
+         if (prev.gameMode === 'classic' && (newStability <= 5 || newStability >= 95)) {
+           if (timerRef.current) clearInterval(timerRef.current);
+           if (spawnRef.current) clearInterval(spawnRef.current);
+           if (moveRef.current) clearInterval(moveRef.current);
+           
+           return {
+             ...prev,
+             foods: updatedFoods,
+             stability: newStability,
+             isGameActive: false,
+             gameResult: 'defeat',
+           };
+         }
 
-    return () => {
-      if (moveRef.current) clearInterval(moveRef.current);
-    };
-  }, [gameState.isGameActive, gameState.isPaused, endGame]);
+         return {
+           ...prev,
+           foods: updatedFoods,
+           stability: newStability,
+           metrics: newMetrics,
+           // Break combo on any missed food
+           comboCount: comboBreaker ? 0 : prev.comboCount,
+         };
+        });
+        }, 32); // ~30fps
+
+        return () => {
+           if (moveRef.current) clearInterval(moveRef.current);
+         };
+        }, [gameState.isGameActive, gameState.isPaused, endGame, tierConfig?.tier]);
 
   // Handle swipe on food - supports 4 directions in Life Mode
   const handleSwipe = useCallback((foodId: string, direction: SwipeDirection, action: SwipeAction) => {

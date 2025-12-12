@@ -3,6 +3,7 @@ import { View, Text, Animated, Dimensions, StyleSheet, TouchableOpacity } from '
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FoodCard } from './FoodCard';
 import { BattleHUD } from './BattleHUD';
+import { BattleTutorialModal } from './BattleTutorialModal';
 import { LifeModeHeader, LifeModeFooter, LeftSidePanel, RightSidePanel, SIDE_PANEL_WIDTH, LifeModePauseOverlay, SavedFoodsPanel, SocialMeterDisplay } from './LifeModeHUD';
 import { AnimatedBackground } from './AnimatedBackground';
 import { InsulinControl } from './InsulinControl';
@@ -181,17 +182,32 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
   tierConfig,
 }) => {
   const shakeAnim = useRef(new Animated.Value(0)).current;
-  const zone = getStabilityZone(gameState.stability);
-  const insets = useSafeAreaInsets();
-  const [showInsulinControl, setShowInsulinControl] = useState(false);
-  
-  // Track combo for burst effect
-  const prevComboRef = useRef(gameState.comboCount);
-  const [comboBurstTrigger, setComboBurstTrigger] = useState(0);
-  
-  // Track swipe feedback
-  const [flashType, setFlashType] = useState<'success' | 'error' | null>(null);
-  const [flashTrigger, setFlashTrigger] = useState(0);
+   const zone = getStabilityZone(gameState.stability);
+   const insets = useSafeAreaInsets();
+   const [showInsulinControl, setShowInsulinControl] = useState(false);
+   
+   // Track combo for burst effect
+   const prevComboRef = useRef(gameState.comboCount);
+   const [comboBurstTrigger, setComboBurstTrigger] = useState(0);
+   
+   // Track swipe feedback
+   const [flashType, setFlashType] = useState<'success' | 'error' | null>(null);
+   const [flashTrigger, setFlashTrigger] = useState(0);
+
+   // Tutorial for tier1 - show modal for first 2 foods
+   const [showTutorial, setShowTutorial] = useState(false);
+   const [tutorialFood, setTutorialFood] = useState<any>(null);
+   const isTier1Tutorial = tierConfig?.tier === 'tier1' && tierConfig.tutorialMode;
+
+   // Show tutorial for first food
+   useEffect(() => {
+     if (isTier1Tutorial && gameState.foods.length > 0 && gameState.correctSwipes + gameState.incorrectSwipes < 2) {
+       setTutorialFood(gameState.foods[0]);
+       setShowTutorial(true);
+     } else {
+       setShowTutorial(false);
+     }
+   }, [gameState.foods, gameState.correctSwipes, gameState.incorrectSwipes, isTier1Tutorial]);
   
   // Get combo color
   const currentTier = [...COMBO_TIERS].reverse().find(t => gameState.comboCount >= t.count);
@@ -249,9 +265,17 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
       <ScreenFlash type={flashType} trigger={flashTrigger} />
       
       {/* Combo burst effect */}
-      <ComboBurst comboCount={comboBurstTrigger} color={comboColor} />
+       <ComboBurst comboCount={comboBurstTrigger} color={comboColor} />
 
-      {/* Health Profile Glucose Display - only show if tier config enables it */}
+       {/* Tier1 Tutorial Modal */}
+       <BattleTutorialModal
+         visible={showTutorial}
+         food={tutorialFood}
+         onDismiss={() => setShowTutorial(false)}
+         controlMode={controlMode}
+       />
+
+       {/* Health Profile Glucose Display - only show if tier config enables it */}
       {tierConfig?.showGlucose && healthProfile && (
         <View style={{ position: 'absolute', top: 40, right: 20, zIndex: 100 }}>
           <TouchableOpacity
