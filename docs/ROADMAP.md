@@ -2,7 +2,13 @@
 
 ## ✅ What We've Built
 
-Core game engine complete: tiered progression (3 tiers × 30/60/90s), classic/life game modes, swipe/tap controls, combo system, player progression tracking, onboarding flows, health profile system, results screens with honest messaging. Ready for user personalization.
+Core game engine complete: tiered progression (3 tiers × 30/60/90s), classic/life game modes, swipe/tap controls, combo system, player progression tracking, onboarding flows, health profile system, results screens with honest messaging. 
+
+**Phase 1 Progress (Weeks 1-5 COMPLETE):**
+- ✅ Week 1-2: User Mode Selection - Modal selector with Personal/Caregiver/Curious modes, persistent storage
+- ✅ Week 2-3: Personalized Onboarding - Mode-specific intro steps with consistent design
+- ✅ Week 3-4: Results Messaging - Tier-specific hero text on victory screens
+- ✅ Week 4-5: In-Game Reflections - Mode-aware insights with science facts during gameplay
 
 ---
 
@@ -10,23 +16,80 @@ Core game engine complete: tiered progression (3 tiers × 30/60/90s), classic/li
 
 **Why:** Current game assumes all players manage their own glucose. Reality: many users are caregivers, family members, or learning for general education. Personalizing the narrative keeps the same game engaging for different user types.
 
-### 1.1 User Mode Selection (Week 1-2)
+### 1.1 User Mode Selection (Week 1-2) ✅ COMPLETE
 
 **Goal:** Players define their relationship to diabetes for personalized experience
 
-**Build:**
-- Modal: "Choose Your Role" (appears once before welcome)
-- Three options:
+**Implemented:**
+- ✅ Modal: "Choose Your Role" (appears once at first launch)
+- ✅ Three persistent options:
   - 👤 **Personal** - Managing my own glucose
   - 👨‍👩‍👧 **Caregiver** - Supporting someone with diabetes
-  - 📚 **Curious** - Learning about glucose/diabetes (future)
-- Store selection in `usePlayerProgress` (never ask again)
+  - 📚 **Curious** - Learning about glucose/diabetes
+- ✅ Selection stored in `usePlayerProgress` via `setUserMode()` (never ask again)
+- ✅ Type-safe: `UserMode` type + `UserModeConfig` for single source of truth
+- ✅ Enhanced `MainMenu.tsx` to show selector when `userMode === null`
+
+**Files changed:**
+- `types/game.ts` - Added `UserMode` + `UserModeConfig` interface
+- `constants/userModes.ts` - NEW - Central configuration
+- `hooks/usePlayerProgress.ts` - Added `userMode` state + `setUserMode()`
+- `components/game/MainMenu.tsx` - Enhanced to show mode selector
+- `app/index.tsx` - Pass `userModeSelected` prop to MainMenu
 
 **Why it matters:** Caregiver mode is high-engagement (emotional driver) and underserved market.
 
 ---
 
-### 1.2 Personalized Onboarding (Week 2-3)
+### 1.2 Personalized Onboarding (Week 2-3) ✅ COMPLETE
+
+**Goal:** Mode-specific intro steps for each user type
+
+**Implemented:**
+- ✅ `getModeIntroStep()` function - Generates mode-specific opening step
+- ✅ Dynamic step titles: Personal/Caregiver/Curious (with icons 💪 ❤️ 🧠)
+- ✅ Mode-specific narrative text in opening
+- ✅ Integrated into Onboarding flow - prepends intro before existing tutorial
+- ✅ Maintains all existing animations and design patterns
+
+**Design consistency:**
+- Same color scheme: Theme colors per game mode (amber/gold)
+- Same typography: Bold title, subtitle, content text styles
+- Same animations: Pulse emoji, fade/scale transitions
+- Same spacing & borders: Rounded 12px, consistent padding
+
+**Files changed:**
+- `components/game/Onboarding.tsx` - Added `getModeIntroStep()` + `userMode` prop
+- `app/index.tsx` - Pass `userMode` from progress to Onboarding
+
+---
+
+### 1.3 Mode-Specific Results & Messaging (Week 3-4) ✅ COMPLETE
+
+**Goal:** Personalized results screen messaging per user type
+
+**Implemented:**
+- ✅ `getModeSpecificMessage()` function - Returns mode + tier-specific hero text
+- ✅ Tier-specific narratives:
+  - **Tier 2 Personal:** "YOU MANAGED" | **Tier 2 Caregiver:** "YOU MANAGED THEIR GLUCOSE"
+  - **Tier 3 Personal:** "YOUR MASTERY UNLOCKED" | **Tier 3 Caregiver:** "YOUR UNDERSTANDING DEEPENED"
+- ✅ Hero text displays in results card under "VICTORY!" header
+- ✅ Gold color (#fbbf24) matches victory theme
+
+**Design consistency:**
+- Matches existing results card aesthetic
+- Gold accent text (victory color)
+- Positioned under main result header (consistent layout)
+- Font weight & size match surrounding content
+
+**Files changed:**
+- `constants/userModes.ts` - Enhanced with `narrative` object
+- `components/game/ResultsScroll.tsx` - Added `getModeSpecificMessage()` + display
+- `app/index.tsx` - Pass `userMode` to ResultsScroll
+
+---
+
+### 1.4 In-Game Reflection Points (Week 4-5)
 
 **Personal Mode:** Same current flow (learning is about managing self)
 
@@ -78,27 +141,42 @@ NEXT: Have deeper conversation with loved one
 
 ---
 
-### 1.4 In-Game Reflection Points (Week 4-5)
+### 1.4 In-Game Reflection Points (Week 4-5) ✅ COMPLETE
 
 **Goal:** Weave learning into gameplay, not just end screens
 
-**At Game End:**
+**Implemented:**
+- ✅ `MODE_REFLECTIONS` config in `constants/userModes.ts` - centralized reflection library
+- ✅ `getReflectionMessage()` helper - retrieves mode-specific insight
+- ✅ Five reflection triggers:
+  - `ally_consumed`: Good food eaten (Personal/Caregiver/Curious specific)
+  - `enemy_rejected`: Bad food refused
+  - `balanced_choice`: General balance achieved
+  - `pairing`: Food pairing strategy (future)
+  - `optimal_swipe`: Perfect directional choice
+- ✅ Probabilistic display (50% for consume/reject, 20% for optimal) - avoids spam
+- ✅ Enhanced `GameState` with `announcementScience` field
+- ✅ Mode-specific messages with science facts:
+  - **Personal:** "You paired carbs with protein - smart! Protein slows glucose absorption."
+  - **Caregiver:** "See the glucose spike from carbs? Their insulin works 15 mins later."
+  - **Curious:** "Whole grains release glucose slowly—stable energy. Fiber reduces spikes by 50%."
+- ✅ Cyan/blue themed display in BattleScreen (reflection color)
+- ✅ Extended announcement duration (2.5s) for educational content
 
-**Personal:**
-```
-💡 You paired carbs with protein - smart!
-This slows glucose absorption (real science).
-Pattern: do this before workouts.
-```
+**Design consistency:**
+- Cyan/blue color (#06b6d4) distinguishes reflections from success/error
+- Science text styled as italic secondary text (gray-100)
+- 💡 emoji prefix for visual emphasis
+- Integrates seamlessly into existing announcement system
 
-**Caregiver:**
-```
-💡 See the glucose spike from carbs?
-Their insulin works 15 mins later.
-This is why timing the meal matters.
-```
+**Files changed:**
+- `constants/userModes.ts` - Added `MODE_REFLECTIONS` + `ReflectionMessage` interface
+- `types/game.ts` - Added `'reflection'` type + `announcementScience` field
+- `hooks/useBattleGame.ts` - Import reflection system, add triggers after consume/reject/optimal
+- `components/game/BattleScreen.tsx` - Display science fact in announcement
+- `app/index.tsx` - Pass `userMode` to useBattleGame
 
-**Deliverable:** Post-game reflection system, mode-aware insights
+**Deliverable:** In-game reflection system with mode-aware insights and science facts
 
 ---
 
@@ -134,14 +212,14 @@ This is why they check blood sugar often.
 
 ## 📅 Timeline
 
-| Week | Deliverable |
-|------|-------------|
-| 1-2 | User mode selection modal + state |
-| 2-3 | Personalized onboarding flows |
-| 3-4 | Results & messaging customization |
-| 4-5 | In-game reflection points |
-| 5-6 | Mode-specific plot twists |
-| 6+ | Testing, refinement, launch |
+| Week | Deliverable | Status |
+|------|-------------|--------|
+| 1-2 | User mode selection modal + state | ✅ Complete |
+| 2-3 | Personalized onboarding flows | ✅ Complete |
+| 3-4 | Results & messaging customization | ✅ Complete |
+| 4-5 | In-game reflection points | ✅ Complete |
+| 5-6 | Mode-specific plot twists | 🔄 In Progress |
+| 6+ | Testing, refinement, launch | ⏳ Upcoming |
 
 ---
 

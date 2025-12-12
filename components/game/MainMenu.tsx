@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, Animated, Dimensions } from 'react-native';
-import { ControlMode } from '@/types/game';
+import { ControlMode, UserMode } from '@/types/game';
 import { usePlayerProgress } from '@/hooks/usePlayerProgress';
+import { USER_MODE_CONFIGS } from '@/constants/userModes';
 
 const { width } = Dimensions.get('window');
 
 interface MainMenuProps {
   onStartGame: (controlMode: ControlMode) => void;
+  onUserModeSelected?: (mode: string) => void;
+  userModeSelected?: boolean;
 }
 
 const FloatingFood: React.FC<{ emoji: string; delay: number; isAlly: boolean }> = ({ emoji, delay, isAlly }) => {
@@ -54,11 +57,12 @@ const FloatingFood: React.FC<{ emoji: string; delay: number; isAlly: boolean }> 
   );
 };
 
-export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame }) => {
+export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onUserModeSelected, userModeSelected }) => {
   const [selectedMode, setSelectedMode] = useState<ControlMode>('swipe');
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const glowAnim = useRef(new Animated.Value(0)).current;
-  const { progress } = usePlayerProgress();
+  const { progress, setUserMode } = usePlayerProgress();
+  const [showUserModeSelector, setShowUserModeSelector] = useState(userModeSelected === false);
 
   useEffect(() => {
     // Pulse animation for start button
@@ -111,6 +115,74 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame }) => {
       )}
     </View>
   ) : null;
+
+  if (showUserModeSelector) {
+    return (
+      <View className="flex-1 bg-[#0f0f1a] items-center justify-center">
+        {/* Animated background foods */}
+        {floatingFoods.map((food, i) => (
+          <FloatingFood 
+            key={i} 
+            emoji={food.emoji} 
+            delay={i * 1000} 
+            isAlly={food.isAlly}
+          />
+        ))}
+
+        {/* Dark overlay */}
+        <View className="absolute inset-0 bg-gradient-to-b from-purple-900/30 to-black/50" />
+
+        {/* User Mode Selector */}
+        <View className="items-center z-10 px-6">
+          {/* Title */}
+          <View className="items-center mb-8">
+            <Text className="text-5xl mb-3">🎮</Text>
+            <Text className="text-white text-3xl font-bold text-center">
+              Choose Your Role
+            </Text>
+            <Text className="text-purple-300 text-sm text-center mt-2">
+              Personalize your glucose journey
+            </Text>
+          </View>
+
+          {/* Mode Options */}
+          <View className="w-full max-w-sm space-y-3">
+            {(Object.keys(USER_MODE_CONFIGS) as UserMode[]).map((mode) => {
+              const config = USER_MODE_CONFIGS[mode];
+              return (
+                <TouchableOpacity
+                  key={mode}
+                  onPress={() => {
+                    setUserMode(mode);
+                    setShowUserModeSelector(false);
+                    onUserModeSelected?.(mode);
+                  }}
+                  className="bg-black/60 p-4 rounded-xl border-2 border-purple-700 active:bg-purple-900/40"
+                >
+                  <View className="flex-row items-center">
+                    <Text className="text-3xl mr-3">{config.icon}</Text>
+                    <View className="flex-1">
+                      <Text className="text-white text-base font-bold">
+                        {config.name}
+                      </Text>
+                      <Text className="text-gray-400 text-xs mt-1">
+                        {config.description}
+                      </Text>
+                    </View>
+                    <Text className="text-purple-400 text-lg">›</Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          <Text className="text-gray-600 text-xs text-center mt-8 max-w-sm">
+            💡 You can change this anytime in settings
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-[#0f0f1a] items-center justify-center">

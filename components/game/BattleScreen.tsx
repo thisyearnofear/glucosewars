@@ -367,24 +367,33 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
                 style={{
                   backgroundColor: gameState.announcementType === 'plot_twist' 
                     ? 'rgba(168, 85, 247, 0.9)' 
-                    : gameState.announcementType === 'error' 
-                      ? 'rgba(239, 68, 68, 0.9)' 
-                      : gameState.announcementType === 'success'
-                        ? 'rgba(34, 197, 94, 0.9)'
-                        : 'rgba(0, 0, 0, 0.9)',
+                    : gameState.announcementType === 'reflection'
+                      ? 'rgba(34, 211, 238, 0.9)'
+                      : gameState.announcementType === 'error' 
+                        ? 'rgba(239, 68, 68, 0.9)' 
+                        : gameState.announcementType === 'success'
+                          ? 'rgba(34, 197, 94, 0.9)'
+                          : 'rgba(0, 0, 0, 0.9)',
                   borderWidth: 2,
                   borderColor: gameState.announcementType === 'plot_twist' 
                     ? '#a855f7' 
-                    : gameState.announcementType === 'error' 
-                      ? '#ef4444' 
-                      : gameState.announcementType === 'success'
-                        ? '#22c55e'
-                        : '#f59e0b',
+                    : gameState.announcementType === 'reflection'
+                      ? '#06b6d4'
+                      : gameState.announcementType === 'error' 
+                        ? '#ef4444' 
+                        : gameState.announcementType === 'success'
+                          ? '#22c55e'
+                          : '#f59e0b',
                 }}
               >
                 <Text className="text-white text-base font-bold text-center">
                   {gameState.announcement}
                 </Text>
+                {gameState.announcementScience && (
+                  <Text className="text-gray-100 text-xs text-center italic leading-4 mt-1">
+                    💡 {gameState.announcementScience}
+                  </Text>
+                )}
               </View>
             )}
           </View>

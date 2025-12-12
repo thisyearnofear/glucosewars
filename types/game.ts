@@ -165,8 +165,9 @@ export interface GameState {
   
   // UI state
   announcement: string | null;
-  announcementType: 'info' | 'success' | 'warning' | 'error' | 'plot_twist' | 'joke' | 'fact' | 'special_mode';
+  announcementType: 'info' | 'success' | 'warning' | 'error' | 'plot_twist' | 'joke' | 'fact' | 'special_mode' | 'reflection';
   announcementPosition: { x: 'left' | 'center' | 'right'; y: 'top' | 'middle' | 'bottom' };
+  announcementScience?: string | null; // Optional educational fact
   showTutorial: boolean;
   tutorialStep: number;
   screenShake: number;
@@ -226,6 +227,22 @@ export type StabilityZone = 'balanced' | 'warning-low' | 'warning-high' | 'criti
 export type MetricZone = 'optimal' | 'good' | 'warning' | 'critical';
 
 export type ControlMode = 'swipe' | 'tap';
+
+// User mode - personalization for different player types
+export type UserMode = 'personal' | 'caregiver' | 'curious';
+
+export interface UserModeConfig {
+  id: UserMode;
+  name: string;
+  icon: string;
+  description: string;
+  subtitle: string;
+  narrative: {
+    onboarding: string;
+    tier2ResultsHero: string;
+    tier3ResultsHero: string;
+  };
+}
 
 export interface ComboTier {
   count: number;

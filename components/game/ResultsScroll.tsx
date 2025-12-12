@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, Animated, Share } from 'react-native';
-import { BodyMetrics, GameMode, MorningCondition, GameState } from '@/types/game';
+import { BodyMetrics, GameMode, MorningCondition, GameState, UserMode } from '@/types/game';
 import { HealthProfile } from '@/types/health';
-import { MORNING_CONDITIONS } from '@/constants/gameConfig';
 import { useScrollIntegration } from '@/hooks/useScrollIntegration';
 import { ScrollIntegration } from './ScrollIntegration';
 import { GameTier } from '@/constants/gameTiers';
+import { getUserModeConfig } from '@/constants/userModes';
 
 // Fun glucose facts and tips
 const GLUCOSE_FACTS = [
@@ -29,6 +29,22 @@ const getShareMessage = (score: number, accuracy: number, grade: string) => {
   return messages[grade as keyof typeof messages] || messages.D;
 };
 
+// Get mode-specific message after results
+function getModeSpecificMessage(userMode: UserMode | undefined, tier: GameTier | undefined): string {
+  if (!userMode || !tier) return '';
+  
+  const modeConfig = getUserModeConfig(userMode);
+  if (!modeConfig) return '';
+
+  if (tier === 'tier2') {
+    return modeConfig.narrative.tier2ResultsHero;
+  }
+  if (tier === 'tier3') {
+    return modeConfig.narrative.tier3ResultsHero;
+  }
+  return '';
+}
+
 interface ResultsScrollProps {
   result: 'victory' | 'defeat';
   score: number;
@@ -46,6 +62,7 @@ interface ResultsScrollProps {
   healthProfile?: HealthProfile;
   tier?: GameTier;
   dexcomOption?: boolean;
+  userMode?: UserMode;
 }
 
 export const ResultsScroll: React.FC<ResultsScrollProps> = ({
@@ -65,6 +82,7 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
   healthProfile,
   tier,
   dexcomOption,
+  userMode,
 }) => {
   const isVictory = result === 'victory';
   const scrollAnim = useRef(new Animated.Value(-500)).current;
@@ -73,7 +91,7 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
   const [showTipsCard, setShowTipsCard] = useState(false);
   const [showScrollPanel, setShowScrollPanel] = useState(false);
   const [randomFact] = useState(() => GLUCOSE_FACTS[Math.floor(Math.random() * GLUCOSE_FACTS.length)]);
-  const { evaluateAchievements, mintAchievements } = useScrollIntegration();
+  const { evaluateAchievements } = useScrollIntegration();
 
   // Evaluate achievements when game ends
   useEffect(() => {
@@ -247,6 +265,18 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
               <Text style={{ fontSize: 22, fontWeight: 'bold', color: isVictory ? '#fbbf24' : '#ef4444' }}>
                 {isVictory ? 'VICTORY!' : 'DEFEAT'}
               </Text>
+              {/* Mode-specific hero message */}
+              {isVictory && getModeSpecificMessage(userMode, tier) && (
+                <Text style={{ 
+                  fontSize: 14, 
+                  color: '#fbbf24',
+                  marginTop: 6,
+                  fontWeight: '600',
+                  textAlign: 'center',
+                }}>
+                  {getModeSpecificMessage(userMode, tier)}
+                </Text>
+              )}
             </View>
 
             {/* Grade */}

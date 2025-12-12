@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, Animated, Dimensions, ActivityIndicator } from 'react-native';
-import { ControlMode, GameMode } from '@/types/game';
+import { ControlMode, GameMode, UserMode } from '@/types/game';
 import { HealthProfile } from '@/types/health';
+import { USER_MODE_CONFIGS } from '@/constants/userModes';
 
 const { width, height } = Dimensions.get('window');
 
@@ -11,6 +12,7 @@ interface OnboardingProps {
   defaultControlMode?: ControlMode;
   gameMode: GameMode;
   healthProfile?: HealthProfile;
+  userMode?: UserMode;
 }
 
 interface OnboardingStep {
@@ -24,6 +26,38 @@ interface OnboardingStep {
   direction?: 'up' | 'down' | 'left' | 'right';
   directionColor?: string;
   directionLabel?: string;
+}
+
+// Get user mode intro step
+function getModeIntroStep(userMode: UserMode | undefined): OnboardingStep {
+  if (!userMode) {
+    return {
+      title: 'WARM-UP ROUND',
+      subtitle: 'Practice your swipes...',
+      content: 'This is a 30-second tutorial to get comfortable with the controls.\nFood armies march toward your castle. Rally allies. Banish invaders.',
+      emoji: '🏰',
+    };
+  }
+
+  const modeConfig = USER_MODE_CONFIGS[userMode];
+  const introTexts: Record<UserMode, string> = {
+    personal: "Understanding YOUR body's glucose response. Every choice teaches you something.",
+    caregiver: 'See what THEY navigate daily. Empathy through experience.',
+    curious: 'Glucose management is complex. This game shows you why.',
+  };
+
+  const emojis: Record<UserMode, string> = {
+    personal: '💪',
+    caregiver: '❤️',
+    curious: '🧠',
+  };
+
+  return {
+    title: modeConfig.name.toUpperCase(),
+    subtitle: modeConfig.subtitle,
+    content: introTexts[userMode],
+    emoji: emojis[userMode],
+  };
 }
 
 // Classic mode steps (2 directions)
@@ -140,8 +174,10 @@ const LIFE_MODE_STEPS: OnboardingStep[] = [
   },
 ];
 
-export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onSkip, defaultControlMode = 'swipe', gameMode, healthProfile }) => {
-  const ONBOARDING_STEPS = gameMode === 'life' ? LIFE_MODE_STEPS : CLASSIC_STEPS;
+export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onSkip, defaultControlMode = 'swipe', gameMode, healthProfile, userMode }) => {
+  // Build steps array with mode-specific intro if available
+  const baseSteps = gameMode === 'life' ? LIFE_MODE_STEPS : CLASSIC_STEPS;
+  const ONBOARDING_STEPS = userMode ? [getModeIntroStep(userMode), ...baseSteps] : baseSteps;
   
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedControlMode, setSelectedControlMode] = useState<ControlMode>(defaultControlMode);

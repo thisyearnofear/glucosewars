@@ -17,6 +17,7 @@ import {
   SavedFoodSlot,
   SocialStats,
   SpecialMode,
+  UserMode,
 } from '@/types/game';
 import { FoodNutrients } from '@/types/health';
 import { getFoodNutrients } from '@/utils/foodToGlucose';
@@ -42,6 +43,7 @@ import {
   TIME_SPEED_MODIFIERS,
   MESSAGE_POSITIONS,
 } from '@/constants/gameConfig';
+import { getReflectionMessage } from '@/constants/userModes';
 
 const { width, height } = Dimensions.get('window');
 
@@ -185,6 +187,7 @@ const initialGameState: GameState = {
   announcement: null,
   announcementType: 'info',
   announcementPosition: { x: 'center', y: 'top' },
+  announcementScience: null,
   showTutorial: true,
   tutorialStep: 0,
   screenShake: 0,
@@ -205,7 +208,7 @@ const initialGameState: GameState = {
   shareableMoments: [],
 };
 
-export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) => void, tierConfig?: any) => {
+export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) => void, tierConfig?: any, userMode?: UserMode) => {
    const [gameState, setGameState] = useState<GameState>(initialGameState);
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -215,13 +218,15 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
   const comboTimerRef = useRef<NodeJS.Timeout | null>(null);
   const plotTwistRef = useRef<NodeJS.Timeout | null>(null);
 
-  const showAnnouncement = useCallback((text: string, type: 'info' | 'success' | 'warning' | 'error' | 'plot_twist' = 'info') => {
-    setGameState(prev => ({ ...prev, announcement: text, announcementType: type }));
+  const showAnnouncement = useCallback((text: string, type: 'info' | 'success' | 'warning' | 'error' | 'plot_twist' | 'reflection' | 'fact' = 'info', science?: string) => {
+    setGameState(prev => ({ ...prev, announcement: text, announcementType: type, announcementScience: science || null }));
     
     if (announcementRef.current) clearTimeout(announcementRef.current);
+    // Longer duration for educational messages
+    const duration = science ? 2500 : (type === 'plot_twist' ? 2500 : 1500);
     announcementRef.current = setTimeout(() => {
-      setGameState(prev => ({ ...prev, announcement: null }));
-    }, type === 'plot_twist' ? 2500 : 1500);
+      setGameState(prev => ({ ...prev, announcement: null, announcementScience: null }));
+    }, duration);
   }, []);
 
   const triggerScreenShake = useCallback((intensity: number = 5) => {
@@ -715,6 +720,14 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
             newMetrics.stability = Math.max(0, Math.min(100, newMetrics.stability + (food.effects.stability * Math.abs(timeModifier))));
             
             points = Math.round(food.points * multiplier);
+            
+            // Show reflection message for good food consumed (50% chance, not every time)
+            if (userMode && Math.random() < 0.5) {
+              const reflection = getReflectionMessage(userMode, 'ally_consumed');
+              if (reflection) {
+                showAnnouncement(reflection.text, 'reflection', reflection.science);
+              }
+            }
           } else {
             // Bad food consumed - apply negative effects
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
@@ -741,6 +754,14 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
             // Correctly rejected bad food
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             points = Math.round(food.points * multiplier);
+            
+            // Show reflection message for enemy rejected (50% chance)
+            if (userMode && Math.random() < 0.5) {
+              const reflection = getReflectionMessage(userMode, 'enemy_rejected');
+              if (reflection) {
+                showAnnouncement(reflection.text, 'reflection', reflection.science);
+              }
+            }
           } else {
             // Wrongly rejected good food
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -794,6 +815,14 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
       const comboTier = COMBO_TIERS.find(t => t.count === newComboCount);
       if (comboTier) {
         showAnnouncement(comboTier.title, 'success');
+      }
+      
+      // Show optimal swipe reflection (rare: 20% chance to avoid spam)
+      if (isOptimalSwipe && userMode && Math.random() < 0.2) {
+        const reflection = getReflectionMessage(userMode, 'optimal_swipe');
+        if (reflection) {
+          showAnnouncement(reflection.text, 'reflection', reflection.science);
+        }
       }
       
       // Check for critical metrics warnings

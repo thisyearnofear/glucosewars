@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { GameTier } from '@/constants/gameTiers';
+import { UserMode } from '@/types/game';
 
 export interface PlayerProgressState {
   maxTierUnlocked: GameTier;
@@ -8,6 +9,7 @@ export interface PlayerProgressState {
   bestScore: number;
   skipOnboarding: boolean;
   lastPlayedAt: number | null;
+  userMode: UserMode | null;
 }
 
 const STORAGE_KEY = 'glucoseWars.playerProgress';
@@ -25,6 +27,7 @@ export function usePlayerProgress() {
       bestScore: 0,
       skipOnboarding: false,
       lastPlayedAt: null,
+      userMode: null,
     };
   });
 
@@ -66,6 +69,10 @@ export function usePlayerProgress() {
     }));
   };
 
+  const setUserMode = (mode: UserMode) => {
+    setProgress(prev => ({ ...prev, userMode: mode }));
+  };
+
   return {
     progress,
     unlockNextTier,
@@ -74,5 +81,6 @@ export function usePlayerProgress() {
     setSkipOnboarding,
     setCurrentTier: (tier: GameTier) =>
       setProgress(prev => ({ ...prev, currentTier: tier })),
+    setUserMode,
   };
 }

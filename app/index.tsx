@@ -18,7 +18,7 @@ export default function HomeScreen() {
   const { progress, unlockNextTier, updateBestScore, incrementGamesPlayed, setSkipOnboarding, setCurrentTier } =
     usePlayerProgress();
 
-  const [appScreen, setAppScreen] = useState<AppScreen>('welcome');
+  const [appScreen, setAppScreen] = useState<AppScreen>('menu');
   const [controlMode, setControlMode] = useState<ControlMode>('swipe');
   const [selectedHealthScenario, setSelectedHealthScenario] = useState<string | null>(null);
   const hasTransitionedToResults = useRef(false);
@@ -45,12 +45,7 @@ export default function HomeScreen() {
     resumeGame,
     restartGame,
     consumeSavedFood,
-  } = useBattleGame(logMeal, tierConfig);
-
-  // First load: show main menu
-  useEffect(() => {
-    setAppScreen('menu');
-  }, []);
+  } = useBattleGame(logMeal, tierConfig, progress.userMode || undefined);
 
   const handleStartGame = (controlMode: ControlMode) => {
     setControlMode(controlMode);
@@ -134,11 +129,14 @@ export default function HomeScreen() {
     }
   }, [appScreen, gameState.isGameActive]);
 
-  // Show main menu
+  // Show main menu with user mode selector if needed
   if (appScreen === 'menu') {
     return (
       <View style={{ flex: 1 }}>
-        <MainMenu onStartGame={handleStartGame} />
+        <MainMenu 
+          onStartGame={handleStartGame}
+          userModeSelected={progress.userMode !== null}
+        />
       </View>
     );
   }
@@ -153,6 +151,7 @@ export default function HomeScreen() {
           defaultControlMode={controlMode}
           gameMode={tierConfig.gameMode}
           healthProfile={healthProfile}
+          userMode={progress.userMode || undefined}
         />
       </View>
     );
@@ -179,6 +178,7 @@ export default function HomeScreen() {
           healthProfile={tierConfig.healthProfile ? healthProfile : undefined}
           tier={currentTier || 'tier1'}
           dexcomOption={tierConfig.dexcomOption}
+          userMode={progress.userMode || undefined}
         />
       </View>
     );
