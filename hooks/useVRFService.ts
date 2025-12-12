@@ -6,6 +6,10 @@
  * For production deployment on Scroll, this needs to be connected to real
  * Scroll VRF contracts and proof verification.
  *
+ * DEPLOYED CONTRACT ADDRESSES:
+ * - GlucoseWarsAchievements: 0xf36223131aDA53e94B08F0c098A6A93424D68EE3
+ * - Anyrand VRF: 0x5d8570e6d734184357f3969b23050d64913be681
+ *
  * Real implementation would use:
  * - Scroll's VRF contracts (requestRandomWords, fulfillRandomWords)
  * - Onchain proof verification

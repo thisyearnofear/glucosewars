@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, Animated, Dimensions } from 'react-native';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { ControlMode, UserMode } from '@/types/game';
 import { usePlayerProgress } from '@/hooks/usePlayerProgress';
 import { USER_MODE_CONFIGS } from '@/constants/userModes';
 import { PrivacyToggle } from '@/components/PrivacyToggle';
 import { PrivacySettingsModal } from '@/components/PrivacySettings';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
+const screenWidth = width;
+const maxWidth = Math.min(screenWidth * 0.9, 400);
 
 interface MainMenuProps {
   onStartGame: (controlMode: ControlMode) => void;
@@ -16,13 +19,13 @@ interface MainMenuProps {
 
 const FloatingFood: React.FC<{ emoji: string; delay: number; isAlly: boolean }> = ({ emoji, delay, isAlly }) => {
   const translateY = useRef(new Animated.Value(0)).current;
-  const translateX = useRef(new Animated.Value(Math.random() * width)).current;
+  const translateX = useRef(new Animated.Value(Math.random() * screenWidth)).current;
   const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const startAnimation = () => {
       translateY.setValue(-50);
-      translateX.setValue(40 + Math.random() * (width - 80));
+      translateX.setValue(40 + Math.random() * (screenWidth - 80));
       opacity.setValue(0);
 
       Animated.sequence([
@@ -104,7 +107,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onUserModeSelec
   };
 
   const progressInfo = progress.maxTierUnlocked !== 'tier1' ? (
-    <View className="bg-black/60 p-3 rounded-xl border border-amber-700 mb-4 w-full max-w-sm">
+    <View style={{ width: maxWidth }} className="bg-black/60 p-3 rounded-xl border border-amber-700 mb-4">
       <Text className="text-amber-400 text-xs font-bold text-center mb-1">
         🏆 YOUR PROGRESS
       </Text>
@@ -149,7 +152,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onUserModeSelec
           </View>
 
           {/* Mode Options */}
-          <View className="w-full max-w-sm space-y-3">
+          <View style={{ width: maxWidth }} className="space-y-3">
             {(Object.keys(USER_MODE_CONFIGS) as UserMode[]).map((mode) => {
               const config = USER_MODE_CONFIGS[mode];
               return (
@@ -179,7 +182,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onUserModeSelec
             })}
           </View>
 
-          <Text className="text-gray-600 text-xs text-center mt-8 max-w-sm">
+          <Text style={{ width: maxWidth }} className="text-gray-600 text-xs text-center mt-8">
             💡 You can change this anytime in settings
           </Text>
         </View>
@@ -202,6 +205,11 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onUserModeSelec
       {/* Dark overlay */}
       <View className="absolute inset-0 bg-gradient-to-b from-purple-900/30 to-black/50" />
 
+      {/* Wallet Connect Button (Top Right) */}
+      <View className="absolute top-0 right-0 z-20 p-4">
+        <ConnectButton />
+      </View>
+
       {/* Content */}
       <View className="items-center z-10 px-6">
         {/* Title */}
@@ -222,7 +230,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onUserModeSelec
         {progressInfo}
 
         {/* Privacy Controls */}
-        <View className="bg-black/60 p-3 rounded-xl border border-cyan-700 mb-4 w-full max-w-sm">
+        <View style={{ width: maxWidth }} className="bg-black/60 p-3 rounded-xl border border-cyan-700 mb-4">
           <View className="flex-row justify-between items-center">
             <View className="flex-1">
               <Text className="text-cyan-400 text-xs font-bold mb-1">
@@ -236,8 +244,9 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onUserModeSelec
               />
             </View>
             <TouchableOpacity
-              className="p-2 ml-2"
+              className="p-2 ml-2 active:bg-cyan-400/20 rounded"
               onPress={() => setShowPrivacySettings(true)}
+              hitSlop={8}
             >
               <Text className="text-cyan-400 text-2xl">⚙️</Text>
             </TouchableOpacity>
@@ -245,12 +254,12 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onUserModeSelec
         </View>
 
         {/* Control Mode Selector */}
-        <View className="bg-black/60 p-3 rounded-2xl border-2 border-purple-700 mb-4 w-full max-w-sm">
+        <View style={{ width: maxWidth }} className="bg-black/60 p-3 rounded-2xl border-2 border-purple-700 mb-4">
           <Text className="text-amber-400 text-xs font-bold text-center mb-2">
             🎮 CONTROLS
           </Text>
           
-          <View className="flex-row space-x-2">
+          <View className="flex-row gap-2">
             <TouchableOpacity
               onPress={() => setSelectedMode('swipe')}
               className={`flex-1 p-2 rounded-lg border ${
@@ -286,7 +295,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onUserModeSelec
         </View>
 
         {/* Quick tips */}
-        <View className="bg-black/60 p-3 rounded-2xl border-2 border-amber-700 mb-4 w-full max-w-sm">
+        <View style={{ width: maxWidth }} className="bg-black/60 p-3 rounded-2xl border-2 border-amber-700 mb-4">
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center flex-1">
               <Text className="text-lg mr-1">👆</Text>

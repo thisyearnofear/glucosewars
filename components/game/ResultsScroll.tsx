@@ -229,6 +229,9 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
     </View>
   );
 
+  const { width: screenWidth } = require('react-native').Dimensions.get('window');
+  const cardMaxWidth = Math.min(screenWidth * 0.9, 380);
+
   return (
     <View style={{ flex: 1, backgroundColor: '#0f0f1a', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
       {/* Background */}
@@ -236,7 +239,7 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
 
       {/* Scroll Integration Panel (Victory only) */}
       {isVictory && (
-        <View style={{ position: 'absolute', top: 40, left: 16, right: 16 }}>
+        <View style={{ position: 'absolute', top: 40, left: 16, right: 16, maxWidth: cardMaxWidth, alignSelf: 'center' }}>
           <ScrollIntegration 
             visible={showScrollPanel}
             onDismiss={() => setShowScrollPanel(false)}
@@ -251,9 +254,9 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
             { scale: scaleAnim },
           ],
           opacity: fadeAnim,
-          width: '100%',
-          maxWidth: 340,
+          width: cardMaxWidth,
           marginTop: showScrollPanel ? 240 : 0,
+          alignSelf: 'center',
         }}
       >
         {showTipsCard ? (

@@ -1,45 +1,56 @@
-/**
- * Scroll Smart Contract Interface
- * Deployed on Scroll Sepolia testnet
- * Handles privacy-controlled achievement NFT minting and fair verification
- * Uses Anyrand VRF for verifiable randomness on Scroll
- *
- * DEPLOYMENT INFORMATION:
- *
- * GlucoseWarsAchievements Contract:
- * - Address: 0xf36223131aDA53e94B08F0c098A6A93424D68EE3
- * - Network: Scroll Sepolia (Chain ID: 534351)
- * - Explorer: https://sepolia-blockscout.scroll.io/address/0xf36223131aDA53e94B08F0c098A6A93424D68EE3
- *
- * Anyrand VRF Contract:
- * - Address: 0x5d8570e6d734184357f3969b23050d64913be681
- * - Purpose: Verifiable Random Function for fair achievement minting
- *
- * Last Updated: 2025-12-12
- */
-
-export const SCROLL_CONFIG = {
-  CHAIN_ID: 534351, // Scroll Sepolia testnet
-  RPC_URL: 'https://sepolia-rpc.scroll.io',
-  EXPLORER_URL: 'https://sepolia-blockscout.scroll.io',
-  // Deployed GlucoseWarsAchievements contract address on Scroll Sepolia
-  CONTRACT_ADDRESS: '0xf36223131aDA53e94B08F0c098A6A93424D68EE3',
-  // Anyrand VRF contract address on Scroll Sepolia
-  ANYRAND_CONTRACT: '0x5d8570e6d734184357f3969b23050d64913be681',
-};
-
-/**
- * Enhanced Solidity contract for privacy-aware, fair achievement minting
- * Uses Anyrand VRF integration for provably fair random events on Scroll
- * Deploy to Scroll Sepolia before production
- */
-export const CONTRACT_SOURCE = `
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./interfaces/IRandomiserCallbackV3.sol";
-import "./interfaces/IAnyrand.sol";
+
+interface IRandomiserCallbackV3 {
+    /// @notice Receive random words from a randomiser.
+    /// @dev Ensure that proper access control is enforced on this function;
+    ///     only the designated randomiser may call this function and the
+    ///     requestId should be as expected from the randomness request.
+    /// @param requestId The identifier for the original randomness request
+    /// @param randomWord Uniform random number in the range [0, 2**256)
+    function receiveRandomness(uint256 requestId, uint256 randomWord) external;
+}
+
+interface IAnyrand {
+    /// @notice State of a request
+    enum RequestState {
+        /// @notice The request does not exist
+        Nonexistent,
+        /// @notice A request has been made, waiting for fulfilment
+        Pending,
+        /// @notice The request has been fulfilled successfully
+        Fulfilled,
+        /// @notice The request was fulfilled, but the callback failed
+        Failed
+    }
+
+    /// @notice Compute the total request price
+    /// @param callbackGasLimit The callback gas limit that will be used for
+    ///     the randomness request
+    function getRequestPrice(
+        uint256 callbackGasLimit
+    ) external view returns (uint256 totalPrice, uint256 effectiveFeePerGas);
+
+    /// @notice Request randomness
+    /// @param deadline Timestamp of when the randomness should be fulfilled. A
+    ///     beacon round closest to this timestamp (rounding up to the nearest
+    ///     future round) will be used as the round from which to derive
+    ///     randomness.
+    /// @param callbackGasLimit Gas limit for callback
+    function requestRandomness(
+        uint256 deadline,
+        uint256 callbackGasLimit
+    ) external payable returns (uint256);
+
+    /// @notice Get the state of a request
+    /// @param requestId The request identifier
+    function getRequestState(
+        uint256 requestId
+    ) external view returns (RequestState);
+}
 
 contract GlucoseWarsAchievements is ERC721, Ownable, IRandomiserCallbackV3 {
   // Anyrand VRF Configuration for Scroll
@@ -56,7 +67,7 @@ contract GlucoseWarsAchievements is ERC721, Ownable, IRandomiserCallbackV3 {
   mapping(uint256 => uint256) public achievementRandomness; // Random value for fair events
   mapping(uint256 => bool) public achievementVerified; // Whether achievement passed fairness verification
 
-  // Privacy settings for each achievements
+  // Privacy settings for each achievement
   mapping(uint256 => string) public achievementPrivacy; // 'public' | 'private' | 'healthcare_only'
 
   // Stats tracking
@@ -90,7 +101,7 @@ contract GlucoseWarsAchievements is ERC721, Ownable, IRandomiserCallbackV3 {
     string memory tokenURI,
     string memory privacyMode // 'public' | 'private' | 'healthcare_only'
   ) external onlyOwner returns (uint256) {
-    uint256 tokenId = _getNextTokenId();
+    uint256 tokenId = _tokenIdCounter++;
     _safeMint(player, tokenId);
     achievementURIs[tokenId] = tokenURI;
     achievementPrivacy[tokenId] = privacyMode;
@@ -119,13 +130,13 @@ contract GlucoseWarsAchievements is ERC721, Ownable, IRandomiserCallbackV3 {
     uint256 achievementId,
     string memory tokenURI,
     string memory privacyMode
-  ) external onlyOwner returns (uint256 requestId) {
+  ) external onlyOwner returns (uint256) {
     // First mint the achievement NFT with placeholder status
-    uint256 tokenId = _getNextTokenId();
+    uint256 tokenId = _tokenIdCounter++;
     _safeMint(player, tokenId);
     achievementURIs[tokenId] = tokenURI;
     achievementPrivacy[tokenId] = privacyMode;
-    achievementVerified[tokenId] = false; // AWaiting randomness
+    achievementVerified[tokenId] = false; // Awaiting randomness
     
     // Add to appropriate privacy category
     playerAchievementsByCategory[player][privacyMode].push(tokenId);
@@ -145,7 +156,7 @@ contract GlucoseWarsAchievements is ERC721, Ownable, IRandomiserCallbackV3 {
     (uint256 requestPrice, ) = IAnyrand(anyrandContract).getRequestPrice(CALLBACK_GAS_LIMIT);
 
     // Request randomness from Anyrand
-    requestId = IAnyrand(anyrandContract).requestRandomness{value: requestPrice}(
+    uint256 requestId = IAnyrand(anyrandContract).requestRandomness{value: requestPrice}(
       deadline,
       CALLBACK_GAS_LIMIT
     );
@@ -158,6 +169,8 @@ contract GlucoseWarsAchievements is ERC721, Ownable, IRandomiserCallbackV3 {
 
     emit AchievementMinted(player, tokenId, achievementId);
     emit RandomnessRequested(requestId, tokenId, player);
+    
+    return requestId;
   }
 
   /**
@@ -258,153 +271,4 @@ contract GlucoseWarsAchievements is ERC721, Ownable, IRandomiserCallbackV3 {
   function getAchievementRandomness(uint256 tokenId) external view returns (uint256) {
     return achievementRandomness[tokenId];
   }
-
-  /**
-   * Internal function to get next token ID
-   */
-  function _getNextTokenId() private returns (uint256) {
-    return _tokenIdCounter++;
-  }
 }
-`;
-
-/**
- * Anyrand interfaces needed for Scroll integration
- */
-export const ANYRAND_INTERFACES = `
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
-
-interface IRandomiserCallbackV3 {
-    /// @notice Receive random words from a randomiser.
-    /// @dev Ensure that proper access control is enforced on this function;
-    ///     only the designated randomiser may call this function and the
-    ///     requestId should be as expected from the randomness request.
-    /// @param requestId The identifier for the original randomness request
-    /// @param randomWord Uniform random number in the range [0, 2**256)
-    function receiveRandomness(uint256 requestId, uint256 randomWord) external;
-}
-
-interface IAnyrand {
-    /// @notice State of a request
-    enum RequestState {
-        /// @notice The request does not exist
-        Nonexistent,
-        /// @notice A request has been made, waiting for fulfilment
-        Pending,
-        /// @notice The request has been fulfilled successfully
-        Fulfilled,
-        /// @notice The request was fulfilled, but the callback failed
-        Failed
-    }
-
-    /// @notice Compute the total request price
-    /// @param callbackGasLimit The callback gas limit that will be used for
-    ///     the randomness request
-    function getRequestPrice(
-        uint256 callbackGasLimit
-    ) external view returns (uint256 totalPrice, uint256 effectiveFeePerGas);
-
-    /// @notice Request randomness
-    /// @param deadline Timestamp of when the randomness should be fulfilled. A
-    ///     beacon round closest to this timestamp (rounding up to the nearest
-    ///     future round) will be used as the round from which to derive
-    ///     randomness.
-    /// @param callbackGasLimit Gas limit for callback
-    function requestRandomness(
-        uint256 deadline,
-        uint256 callbackGasLimit
-    ) external payable returns (uint256);
-
-    /// @notice Get the state of a request
-    /// @param requestId The request identifier
-    function getRequestState(
-        uint256 requestId
-    ) external view returns (RequestState);
-}
-`;
-
-/**
- * Achievement metadata for NFT minting
- * IPFS/Arweave ready
- */
-export const ACHIEVEMENT_METADATA = {
-  victory_classic: {
-    name: 'Glucose Master',
-    description: 'Won a Classic mode game - proof of glucose management mastery',
-    image: 'ipfs://QmXXXX/glucose_master.png', // Update with actual IPFS hash
-    attributes: [
-      { trait_type: 'Rarity', value: 'Common' },
-      { trait_type: 'Category', value: 'Victory' },
-      { trait_type: 'Points', value: '100' },
-    ],
-  },
-  victory_life: {
-    name: 'Life Keeper',
-    description: 'Survived a full Life mode game - advanced health management',
-    image: 'ipfs://QmXXXX/life_keeper.png',
-    attributes: [
-      { trait_type: 'Rarity', value: 'Rare' },
-      { trait_type: 'Category', value: 'Victory' },
-      { trait_type: 'Points', value: '250' },
-    ],
-  },
-  perfect_stability: {
-    name: 'Perfect Balance',
-    description: 'Maintained optimal glucose levels throughout entire game',
-    image: 'ipfs://QmXXXX/perfect_balance.png',
-    attributes: [
-      { trait_type: 'Rarity', value: 'Epic' },
-      { trait_type: 'Category', value: 'Excellence' },
-      { trait_type: 'Points', value: '150' },
-    ],
-  },
-  high_combo: {
-    name: 'Combo Champion',
-    description: 'Achieved 50+ consecutive correct swipes',
-    image: 'ipfs://QmXXXX/combo_champion.png',
-    attributes: [
-      { trait_type: 'Rarity', value: 'Rare' },
-      { trait_type: 'Category', value: 'Skill' },
-      { trait_type: 'Points', value: '120' },
-    ],
-  },
-  health_streak: {
-    name: 'Health Warrior',
-    description: 'Won 3 consecutive games',
-    image: 'ipfs://QmXXXX/health_warrior.png',
-    attributes: [
-      { trait_type: 'Rarity', value: 'Legendary' },
-      { trait_type: 'Category', value: 'Dedication' },
-      { trait_type: 'Points', value: '300' },
-    ],
-  },
-  explorer: {
-    name: 'Explorer',
-    description: 'Played all available game modes',
-    image: 'ipfs://QmXXXX/explorer.png',
-    attributes: [
-      { trait_type: 'Rarity', value: 'Rare' },
-      { trait_type: 'Category', value: 'Discovery' },
-      { trait_type: 'Points', value: '200' },
-    ],
-  },
-};
-
-/**
- * Helper to generate NFT metadata JSON
- */
-export const generateMetadataJSON = (
-  achievementId: keyof typeof ACHIEVEMENT_METADATA,
-  playerAddress: string
-) => {
-  const base = ACHIEVEMENT_METADATA[achievementId];
-  return {
-    ...base,
-    attributes: [
-      ...base.attributes,
-      { trait_type: 'Earned By', value: playerAddress },
-      { trait_type: 'Earned On', value: new Date().toISOString() },
-    ],
-  };
-};

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, Pressable, ScrollView, ActivityIndicator } from 'react-native';
 import { useScrollIntegration } from '@/hooks/useScrollIntegration';
 import { OnchainAchievement } from '@/types/game';
@@ -18,8 +18,6 @@ export const ScrollIntegration: React.FC<ScrollIntegrationProps> = ({
     isMinting,
     achievements,
     getTotalScore,
-    connectWallet,
-    disconnectWallet,
   } = useScrollIntegration();
 
   if (!visible) return null;
@@ -30,48 +28,31 @@ export const ScrollIntegration: React.FC<ScrollIntegrationProps> = ({
     <View className="flex-1 bg-black/95 border border-cyan-500/30 rounded-lg p-4 mb-4">
       {/* Header */}
       <View className="flex-row justify-between items-center mb-4">
-        <Text className="text-white text-lg font-bold">⛓️ Scroll Integration</Text>
+        <Text className="text-white text-lg font-bold">⛓️ Achievements</Text>
         <Pressable
           onPress={onDismiss}
-          className="w-8 h-8 justify-center items-center"
+          className="w-10 h-10 justify-center items-center active:bg-white/10 rounded"
+          hitSlop={8}
         >
           <Text className="text-white text-lg">✕</Text>
         </Pressable>
       </View>
 
-      {/* Wallet Status */}
+      {/* Wallet Status Info */}
       <View className="bg-slate-900 rounded-lg p-3 mb-4 border border-slate-700">
         {isConnected && userAddress ? (
           <View>
             <Text className="text-emerald-400 text-sm font-semibold mb-2">
-              ✓ Connected
+              ✓ Wallet Connected
             </Text>
-            <Text className="text-gray-300 text-xs font-mono mb-3 break-all">
+            <Text className="text-gray-300 text-xs font-mono break-all">
               {userAddress.slice(0, 6)}...{userAddress.slice(-4)}
             </Text>
-            <Pressable
-              onPress={disconnectWallet}
-              className="bg-red-900/40 border border-red-600/50 rounded px-3 py-2"
-            >
-              <Text className="text-red-300 text-xs font-semibold text-center">
-                Disconnect
-              </Text>
-            </Pressable>
           </View>
         ) : (
-          <View>
-            <Text className="text-gray-400 text-sm mb-3">
-              Connect Scroll Sepolia wallet to mint achievements as NFTs
-            </Text>
-            <Pressable
-              onPress={connectWallet}
-              className="bg-cyan-600/30 border border-cyan-500 rounded px-4 py-2"
-            >
-              <Text className="text-cyan-300 text-sm font-semibold text-center">
-                Connect Wallet
-              </Text>
-            </Pressable>
-          </View>
+          <Text className="text-gray-400 text-sm">
+            💡 Connect your wallet above to mint achievements as NFTs
+          </Text>
         )}
       </View>
 

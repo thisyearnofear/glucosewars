@@ -100,7 +100,7 @@ export const PrivacySettingsModal: React.FC<PrivacySettingsProps> = ({
         <View style={styles.modalContent}>
           <View style={styles.header}>
             <Text style={styles.title}>Privacy Settings</Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+            <TouchableOpacity onPress={onClose} style={styles.closeButton} hitSlop={8}>
               <Text style={styles.closeButtonText}>✕</Text>
             </TouchableOpacity>
           </View>
@@ -205,13 +205,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    padding: 20,
+    padding: 16,
   },
   modalContent: {
     backgroundColor: '#1f2937',
     borderRadius: 16,
-    width: '90%',
-    maxWidth: 500,
+    width: '100%',
+    maxWidth: 480,
+    maxHeight: '90%',
     padding: 20,
   },
   header: {

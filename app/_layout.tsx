@@ -10,6 +10,9 @@ import { useEffect } from "react";
 import "react-native-reanimated";
 import "../global.css";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { WagmiProvider } from 'wagmi';
+import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
+import { wagmiConfig } from '@/utils/wagmiConfig';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -30,17 +33,21 @@ export default function RootLayout() {
   }
 
   return (
-    <SafeAreaProvider>
-      <ThemeProvider value={DefaultTheme}>
-        <Stack
-          screenOptions={({ route }) => ({
-            headerShown: !route.name.startsWith("tempobook"),
-          })}
-        >
-          <Stack.Screen name="index" options={{ headerShown: false }} />
-        </Stack>
-        <StatusBar style="auto" />
-      </ThemeProvider>
-    </SafeAreaProvider>
+    <WagmiProvider config={wagmiConfig}>
+      <RainbowKitProvider>
+        <SafeAreaProvider>
+          <ThemeProvider value={DefaultTheme}>
+            <Stack
+              screenOptions={({ route }) => ({
+                headerShown: !route.name.startsWith("tempobook"),
+              })}
+            >
+              <Stack.Screen name="index" options={{ headerShown: false }} />
+            </Stack>
+            <StatusBar style="auto" />
+          </ThemeProvider>
+        </SafeAreaProvider>
+      </RainbowKitProvider>
+    </WagmiProvider>
   );
 }
