@@ -25,9 +25,10 @@ export const useHealthProfile = (initialScenario?: HealthScenario) => {
     simCurrentTime: Date.now(),
     timeAccelerationFactor: 24, // 1 minute game = 24 minutes simulated
     currentDayMetrics: {},
+    mealAbsorptionCurve: 'normal',
   });
 
-  const glucoseSimulationRef = useRef<NodeJS.Timeout | null>(null);
+  const glucoseSimulationRef = useRef<number | null>(null);
 
   /**
    * Update scenario (onboarding)
@@ -66,7 +67,7 @@ export const useHealthProfile = (initialScenario?: HealthScenario) => {
 
           for (const dose of activeInsulin) {
             const timeElapsed = (now - dose.administeredAt) / 1000 / 60; // minutes
-            const profile = INSULIN_PROFILES[dose.type];
+            const profile = INSULIN_PROFILES[dose.type] || INSULIN_PROFILES.rapid; // fallback to rapid if type is 'none'
             
             // Estimate insulin effect curve
             const peakEffect = dose.units * 50; // Simplified ISF calculation
@@ -157,8 +158,8 @@ export const useHealthProfile = (initialScenario?: HealthScenario) => {
             type: (insulinType as any) || prev.insulinType,
             units,
             administeredAt: Date.now(),
-            peakTime: INSULIN_PROFILES[prev.insulinType].peakMins,
-            duration: INSULIN_PROFILES[prev.insulinType].durationMins * 60 * 1000,
+            peakTime: (INSULIN_PROFILES[prev.insulinType] || INSULIN_PROFILES.rapid).peakMins,
+            duration: (INSULIN_PROFILES[prev.insulinType] || INSULIN_PROFILES.rapid).durationMins * 60 * 1000,
           },
         ],
       }));
@@ -219,7 +220,7 @@ export const useHealthProfile = (initialScenario?: HealthScenario) => {
     for (const dose of healthProfile.activeInsulin) {
       const timeFromAdministration = (Date.now() - dose.administeredAt) / 1000 / 60;
       const timeOfInterest = timeFromAdministration + minutesAhead;
-      const profile = INSULIN_PROFILES[dose.type];
+      const profile = INSULIN_PROFILES[dose.type] || INSULIN_PROFILES.rapid;
 
       if (timeOfInterest < profile.durationMins) {
         const insulinEffect = dose.units * 50; // ISF

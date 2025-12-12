@@ -13,7 +13,8 @@ export const RealmStabilityMeter: React.FC<RealmStabilityMeterProps> = ({ stabil
   const getZoneLabel = () => {
     switch (zone) {
       case 'balanced': return 'BALANCED';
-      case 'warning': return 'WARNING';
+      case 'warning-low': return 'WARNING LOW';
+      case 'warning-high': return 'WARNING HIGH';
       case 'critical-high': return 'CRITICAL HIGH';
       case 'critical-low': return 'CRITICAL LOW';
     }

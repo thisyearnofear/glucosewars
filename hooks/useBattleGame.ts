@@ -146,7 +146,6 @@ const initialGameState: GameState = {
    // Core
    score: 0,
    timer: GAME_DURATION,
-   tutorialStep: 0, // Track tutorial progress for tier1
   foods: [],
   isGameActive: false,
   gameResult: null,

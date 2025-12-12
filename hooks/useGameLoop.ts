@@ -14,35 +14,113 @@ const { width, height } = Dimensions.get('window');
 
 export const useGameLoop = () => {
   const [gameState, setGameState] = useState<GameState>({
+    // Core
     score: 0,
-    glucoseLevel: INITIAL_GLUCOSE,
     timer: GAME_DURATION,
-    pathLength: 0,
-    particles: [],
+    foods: [],
     isGameActive: false,
     gameResult: null,
+    gameMode: 'classic',
+
+    // Multi-metric system
+    metrics: {
+      energy: 50,
+      hydration: 50,
+      nutrition: 50,
+      stability: 50,
+    },
+    stability: INITIAL_GLUCOSE,
+
+    // Time of day (Life Mode)
+    timePhase: 'morning',
+    morningCondition: 'normal_day',
+
+    // Plot twists
+    activePlotTwist: null,
+    plotTwistTimer: 0,
+    plotTwistsTriggered: 0,
+
+    // Special modes
+    activeSpecialMode: null,
+    specialModeTimer: 0,
+    foodTypeStreak: { type: '', count: 0 },
+
+    // Combo system
     comboCount: 0,
+    comboTimer: 0,
+    lastSwipeTime: 0,
+
+    // Power-ups
+    exerciseCharges: 3,
+    rationCharges: 3,
+
+    // 4-Direction Swipe System
+    savedFoods: [{ food: null, savedAt: 0 }, { food: null, savedAt: 0 }, { food: null, savedAt: 0 }],
+    socialStats: { totalShares: 0, shareStreak: 0, socialMeter: 0 },
+    lastSwipeAction: null,
+
+    // UI state
+    announcement: null,
+    announcementType: 'info',
+    announcementPosition: { x: 'center', y: 'top' },
+    announcementScience: null,
+    showTutorial: true,
+    tutorialStep: 0,
+    screenShake: 0,
+    isPaused: false,
+
+    // Dynamic speed modifiers
+    speedMultiplier: 1.0,
+    spawnRateMultiplier: 1.0,
+
+    // Stats tracking
+    correctSwipes: 0,
+    incorrectSwipes: 0,
+    optimalSwipes: 0,
+    timeInBalanced: 0,
+    timeInWarning: 0,
+    timeInCritical: 0,
+    metricsHistory: [],
+    shareableMoments: [],
   });
   
   const hexPathRef = useRef<HexPath | null>(null);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const pathExtendRef = useRef<NodeJS.Timeout | null>(null);
-  const particleSpawnRef = useRef<NodeJS.Timeout | null>(null);
-  const particleMoveRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<number | null>(null);
+  const pathExtendRef = useRef<number | null>(null);
+  const particleSpawnRef = useRef<number | null>(null);
+  const particleMoveRef = useRef<number | null>(null);
   
   const startGame = useCallback(() => {
     hexPathRef.current = new HexPath(width, height);
-    
-    setGameState({
+
+    setGameState(prev => ({
+      ...prev,
+      // Core
       score: 0,
-      glucoseLevel: INITIAL_GLUCOSE,
       timer: GAME_DURATION,
-      pathLength: 1,
-      particles: [],
+      foods: [],
       isGameActive: true,
       gameResult: null,
+
+      // Multi-metric system
+      metrics: {
+        energy: 50,
+        hydration: 50,
+        nutrition: 50,
+        stability: 50,
+      },
+      stability: INITIAL_GLUCOSE,
+
+      // UI state
+      announcement: null,
       comboCount: 0,
-    });
+
+      // Stats tracking
+      correctSwipes: 0,
+      incorrectSwipes: 0,
+      optimalSwipes: 0,
+      metricsHistory: [],
+    }));
   }, []);
   
   const endGame = useCallback((result: 'victory' | 'defeat') => {
@@ -66,7 +144,8 @@ export const useGameLoop = () => {
       setGameState((prev) => {
         const newTimer = prev.timer - 1;
         if (newTimer <= 0) {
-          endGame(prev.glucoseLevel >= 40 && prev.glucoseLevel <= 60 ? 'victory' : 'defeat');
+          // Use stability instead of glucoseLevel for victory condition
+          endGame(prev.stability >= 40 && prev.stability <= 60 ? 'victory' : 'defeat');
           return prev;
         }
         return { ...prev, timer: newTimer };
@@ -78,145 +157,33 @@ export const useGameLoop = () => {
     };
   }, [gameState.isGameActive, endGame]);
 
-  // Path extension
-  useEffect(() => {
-    if (!gameState.isGameActive || !hexPathRef.current) return;
 
-    pathExtendRef.current = setInterval(() => {
-      const extended = hexPathRef.current?.extend();
-      if (extended) {
-        setGameState((prev) => ({ ...prev, pathLength: prev.pathLength + 1 }));
-      }
-    }, PATH_EXTEND_INTERVAL);
-
-    return () => {
-      if (pathExtendRef.current) clearInterval(pathExtendRef.current);
-    };
-  }, [gameState.isGameActive]);
-
-  // Spawn particles
+  // Placeholder effect - game mechanics have changed
   useEffect(() => {
     if (!gameState.isGameActive) return;
 
-    // Spawn first particle immediately
-    const spawnParticle = () => {
-      const rand = Math.random();
-      let type = GLUCOSE_TYPES[0];
-      
-      let cumulative = 0;
-      for (const glucoseType of GLUCOSE_TYPES) {
-        cumulative += glucoseType.spawnChance;
-        if (rand <= cumulative) {
-          type = glucoseType;
-          break;
-        }
-      }
-
-      const newParticle: GlucoseParticle = {
-        id: `particle-${Date.now()}-${Math.random()}`,
-        type: type.type,
-        position: 0,
-        speed: 0.008 + Math.random() * 0.006,
-        points: type.basePoints,
-        color: type.color,
-      };
-
-      setGameState((prev) => ({
-        ...prev,
-        particles: [...prev.particles, newParticle],
-      }));
-    };
-
-    // Spawn 3 particles immediately at game start
-    spawnParticle();
-    setTimeout(spawnParticle, 300);
-    setTimeout(spawnParticle, 600);
-
-    particleSpawnRef.current = setInterval(spawnParticle, 1200);
+    // Current game uses food swiping instead of particle tapping
+    // This effect is maintained for compatibility but may be removed
 
     return () => {
-      if (particleSpawnRef.current) clearInterval(particleSpawnRef.current);
+      // Cleanup
     };
   }, [gameState.isGameActive]);
-
-  // Move particles
-  useEffect(() => {
-    if (!gameState.isGameActive) return;
-
-    particleMoveRef.current = setInterval(() => {
-      setGameState((prev) => {
-        const updatedParticles = prev.particles
-          .map((p) => ({ ...p, position: p.position + p.speed }))
-          .filter((p) => p.position < 1);
-
-        // Check for particles that reached the end
-        const missedParticles = prev.particles.filter((p) => p.position + p.speed >= 1);
-        let newGlucose = prev.glucoseLevel;
-        
-        missedParticles.forEach((p) => {
-          const glucoseDef = GLUCOSE_TYPES.find((g) => g.type === p.type);
-          if (glucoseDef) {
-            newGlucose = Math.max(0, Math.min(100, newGlucose + glucoseDef.glucoseImpact));
-          }
-        });
-
-        // Check for critical glucose levels
-        if (newGlucose <= 0 || newGlucose >= 100) {
-          endGame('defeat');
-        }
-
-        return {
-          ...prev,
-          particles: updatedParticles,
-          glucoseLevel: newGlucose,
-        };
-      });
-    }, 50);
-
-    return () => {
-      if (particleMoveRef.current) clearInterval(particleMoveRef.current);
-    };
-  }, [gameState.isGameActive, endGame]);
 
   const handleParticleTap = useCallback((particleId: string) => {
-    setGameState((prev) => {
-      const particle = prev.particles.find((p) => p.id === particleId);
-      if (!particle) return prev;
-
-      const glucoseDef = GLUCOSE_TYPES.find((g) => g.type === particle.type);
-      if (!glucoseDef) return prev;
-
-      const isHealthy = particle.type === 'healthy' || particle.type === 'bonus';
-      
-      if (isHealthy) {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        
-        return {
-          ...prev,
-          score: prev.score + particle.points,
-          glucoseLevel: Math.max(0, Math.min(100, prev.glucoseLevel + glucoseDef.glucoseImpact)),
-          particles: prev.particles.filter((p) => p.id !== particleId),
-          comboCount: prev.comboCount + 1,
-        };
-      } else {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        
-        return {
-          ...prev,
-          glucoseLevel: Math.max(0, Math.min(100, prev.glucoseLevel - 10)),
-          particles: prev.particles.filter((p) => p.id !== particleId),
-          comboCount: 0,
-        };
-      }
-    });
+    // This function is for the old particle system and is no longer used
+    // Current game uses handleSwipe in useBattleGame instead
+    console.log("Particle tap handler - this is an old function from previous game version");
   }, []);
 
   const getPathData = () => {
-    return hexPathRef.current?.getPathData() || '';
+    // Hex path system is from previous game version
+    return '';
   };
 
   const getBridgeTransforms = () => {
-    return hexPathRef.current?.getBridgeTransforms() || [];
+    // Hex path system is from previous game version
+    return [];
   };
 
   return {

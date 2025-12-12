@@ -12,7 +12,7 @@ import { usePlayerProgress } from '@/hooks/usePlayerProgress';
 import { ControlMode } from '@/types/game';
 import { GAME_TIERS, GameTier } from '@/constants/gameTiers';
 
-type AppScreen = 'menu' | 'onboarding' | 'battle' | 'results';
+type AppScreen = 'menu' | 'onboarding' | 'battle' | 'results' | 'welcome';
 
 export default function HomeScreen() {
   const { progress, unlockNextTier, updateBestScore, incrementGamesPlayed, setSkipOnboarding, setCurrentTier } =

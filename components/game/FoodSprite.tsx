@@ -14,8 +14,8 @@ export const FoodSprite: React.FC<FoodSpriteProps> = ({ food }) => {
     <View
       className="absolute items-center justify-center"
       style={{
-        left: food.position.x,
-        top: food.position.y,
+        left: food.x,
+        top: food.y,
         transform: [{ translateX: -25 }, { translateY: -25 }],
       }}
     >

@@ -124,13 +124,16 @@ export const generateMockReadings = (
       timestamp,
       source: 'simulated',
       trend,
-      trendArrow: {
-        'rapidly_rising': '↑↑',
-        'rising': '↑',
-        'stable': '→',
-        'falling': '↓',
-        'rapidly_falling': '↓↓',
-      }[trend],
+      trendArrow: ((): '↑↑' | '↑' | '→' | '↓' | '↓↓' | undefined => {
+        switch (trend) {
+          case 'rapidly_rising': return '↑↑';
+          case 'rising': return '↑';
+          case 'stable': return '→';
+          case 'falling': return '↓';
+          case 'rapidly_falling': return '↓↓';
+          default: return undefined;
+        }
+      })(),
     });
   }
   
@@ -221,5 +224,12 @@ export const INSULIN_PROFILES = {
     peakMins: 45,
     durationMins: 240,
     glucoseDrop: 'controlled',
+  },
+  none: {
+    name: 'No Insulin',
+    onsetMins: 0,
+    peakMins: 0,
+    durationMins: 0,
+    glucoseDrop: 'none',
   },
 };

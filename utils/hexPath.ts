@@ -22,7 +22,12 @@ export class HexPath {
       height * 100 - this.center.y
     );
 
-    this.nodes = [[0, this.center.x, this.center.y, true] as any];
+    this.nodes = [{
+      direction: 0,
+      x: this.center.x,
+      y: this.center.y,
+      isActive: true,
+    }];
   }
 
   private half(direction: number, x: number, y: number): [number, number] {
@@ -40,7 +45,7 @@ export class HexPath {
   }
 
   extend(): boolean {
-    const [direction, , , isActive] = this.nodes[0];
+    const { direction, isActive } = this.nodes[0];
     const [px, py] = this.half(direction, this.nodes[0].x, this.nodes[0].y);
 
     const candidates = [0, 1, 2, 3, 4, 5]
