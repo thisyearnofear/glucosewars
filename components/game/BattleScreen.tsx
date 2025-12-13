@@ -156,6 +156,7 @@ interface BattleScreenProps {
   healthProfile?: HealthProfile;
   onAdministerInsulin?: (units: number, insulinType?: string) => void;
   tierConfig?: TierConfig;
+  onToggleControlMode?: () => void;
 }
 
 const getStabilityZone = (stability: number): StabilityZone => {
@@ -180,6 +181,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
   healthProfile,
   onAdministerInsulin,
   tierConfig,
+  onToggleControlMode,
 }) => {
   const shakeAnim = useRef(new Animated.Value(0)).current;
    const zone = getStabilityZone(gameState.stability);
@@ -198,16 +200,44 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
    const [showTutorial, setShowTutorial] = useState(false);
    const [tutorialFood, setTutorialFood] = useState<any>(null);
    const isTier1Tutorial = tierConfig?.tier === 'tier1' && tierConfig.tutorialMode;
+   const currentTutorialFoodId = useRef<string | null>(null);
+   const tutorialTimeout = useRef<number | null>(null);
 
    // Show tutorial for first food
    useEffect(() => {
-     if (isTier1Tutorial && gameState.foods.length > 0 && gameState.correctSwipes + gameState.incorrectSwipes < 2) {
-       setTutorialFood(gameState.foods[0]);
-       setShowTutorial(true);
-     } else {
-       setShowTutorial(false);
+     // Clear any existing timeout
+     if (tutorialTimeout.current) {
+       clearTimeout(tutorialTimeout.current);
      }
-   }, [gameState.foods, gameState.correctSwipes, gameState.incorrectSwipes, isTier1Tutorial]);
+     
+     // Only show tutorial during the initial phase (first 2 swipes) and when game is active
+     if (isTier1Tutorial && gameState.isGameActive && gameState.foods.length > 0 && gameState.correctSwipes + gameState.incorrectSwipes < 2) {
+       const firstFood = gameState.foods[0];
+       // Only show tutorial if not already showing AND either:
+       // 1. No tutorial food is set yet, OR
+       // 2. The current tutorial food is different from the first food
+       if (!showTutorial && firstFood && firstFood.id !== currentTutorialFoodId.current) {
+         // Add a small delay to prevent rapid flashing
+         tutorialTimeout.current = setTimeout(() => {
+           setTutorialFood(firstFood);
+           currentTutorialFoodId.current = firstFood.id;
+           setShowTutorial(true);
+         }, 100);
+       }
+     } else if (showTutorial && (gameState.correctSwipes + gameState.incorrectSwipes >= 2 || !isTier1Tutorial || !gameState.isGameActive)) {
+       // Only hide tutorial if we've exceeded the swipe limit, tutorial mode is off, or game is not active
+       tutorialTimeout.current = setTimeout(() => {
+         setShowTutorial(false);
+         currentTutorialFoodId.current = null;
+       }, 100);
+     }
+     
+     return () => {
+       if (tutorialTimeout.current) {
+         clearTimeout(tutorialTimeout.current);
+       }
+     };
+   }, [gameState.foods, gameState.correctSwipes, gameState.incorrectSwipes, gameState.isGameActive, isTier1Tutorial, showTutorial]);
   
   // Get combo color
   const currentTier = [...COMBO_TIERS].reverse().find(t => gameState.comboCount >= t.count);
@@ -271,8 +301,16 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
        <BattleTutorialModal
          visible={showTutorial}
          food={tutorialFood}
-         onDismiss={() => setShowTutorial(false)}
+         onDismiss={() => {
+           if (tutorialTimeout.current !== null) {
+             clearTimeout(tutorialTimeout.current);
+             tutorialTimeout.current = null;
+           }
+           setShowTutorial(false);
+           currentTutorialFoodId.current = null;
+         }}
          controlMode={controlMode}
+         key={`${showTutorial}-${tutorialFood?.id}`}
        />
 
        {/* Health Profile Glucose Display - only show if tier config enables it */}
@@ -337,11 +375,11 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
           <RightSidePanel metrics={gameState.metrics} />
           
           {/* Top Header - Centered between side panels */}
-          <View 
-            style={{ 
+          <View
+            style={{
               position: 'absolute',
               top: 0,
-              left: SIDE_PANEL_WIDTH, 
+              left: SIDE_PANEL_WIDTH,
               right: SIDE_PANEL_WIDTH,
               zIndex: 50,
             }}
@@ -406,11 +444,11 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
           )}
           
           {/* Bottom Footer - Centered between side panels */}
-          <View 
-            style={{ 
+          <View
+            style={{
               position: 'absolute',
               bottom: insets.bottom,
-              left: SIDE_PANEL_WIDTH, 
+              left: SIDE_PANEL_WIDTH,
               right: SIDE_PANEL_WIDTH,
               zIndex: 100,
             }}
@@ -432,6 +470,8 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
             onResume={onResume}
             onRestart={onRestart}
             onExit={onExit}
+            controlMode={controlMode}
+            onToggleControlMode={onToggleControlMode}
           />
         </>
       ) : (
@@ -451,6 +491,8 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
           onResume={onResume}
           onRestart={onRestart}
           showComboCounter={tierConfig?.showComboCounter ?? true}
+          controlMode={controlMode}
+          onToggleControlMode={onToggleControlMode}
         />
       )}
       

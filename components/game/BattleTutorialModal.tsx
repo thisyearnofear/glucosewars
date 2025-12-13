@@ -36,12 +36,16 @@ export const BattleTutorialModal: React.FC<BattleTutorialModalProps> = ({
 
       // Auto-dismiss after 4 seconds
       const timer = setTimeout(onDismiss, 4000);
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        fadeAnim.setValue(0);
+        scaleAnim.setValue(0.8);
+      };
     } else {
       fadeAnim.setValue(0);
       scaleAnim.setValue(0.8);
     }
-  }, [visible]);
+  }, [visible, onDismiss]);
 
   if (!food) return null;
 

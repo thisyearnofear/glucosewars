@@ -22,6 +22,8 @@ interface BattleHUDProps {
   onResume?: () => void;
   onRestart?: () => void;
   showComboCounter?: boolean;
+  controlMode?: 'swipe' | 'tap';
+  onToggleControlMode?: () => void;
 }
 
 const getStabilityZone = (stability: number): StabilityZone => {
@@ -232,6 +234,8 @@ export const BattleHUD: React.FC<BattleHUDProps> = ({
   onResume,
   onRestart,
   showComboCounter = true,
+  controlMode = 'swipe',
+  onToggleControlMode,
 }) => {
   const zone = getStabilityZone(stability);
   const stabilityColor = getStabilityColor(zone);
@@ -564,7 +568,24 @@ export const BattleHUD: React.FC<BattleHUDProps> = ({
             >
               <Text style={styles.resumeButtonText}>▶️ RESUME BATTLE</Text>
             </TouchableOpacity>
-            
+           
+            {/* Control Mode Toggle */}
+            {onToggleControlMode && (
+              <TouchableOpacity
+                onPress={onToggleControlMode}
+                style={styles.controlToggleButton}
+              >
+                <View style={styles.controlToggleContent}>
+                  <Text style={styles.controlToggleIcon}>{controlMode === 'swipe' ? '👆👇' : '🖱️'}</Text>
+                  <View style={styles.controlToggleInfo}>
+                    <Text style={styles.controlToggleLabel}>CONTROL MODE</Text>
+                    <Text style={styles.controlToggleValue}>{controlMode === 'swipe' ? 'SWIPE' : 'TAP'}</Text>
+                  </View>
+                  <Text style={styles.controlToggleSwitch}>🔄</Text>
+                </View>
+              </TouchableOpacity>
+            )}
+          
             <TouchableOpacity
               onPress={onRestart}
               style={styles.restartButton}
@@ -1025,6 +1046,42 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     textAlign: 'center',
+  },
+  controlToggleButton: {
+    backgroundColor: 'rgba(59,130,246,0.2)',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#3b82f6',
+    marginBottom: 12,
+    width: '100%',
+  },
+  controlToggleContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  controlToggleIcon: {
+    fontSize: 20,
+    marginRight: 10,
+  },
+  controlToggleInfo: {
+    flex: 1,
+  },
+  controlToggleLabel: {
+    color: '#93c5fd',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  controlToggleValue: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  controlToggleSwitch: {
+    fontSize: 16,
+    color: '#60a5fa',
   },
 
   // Combo styles

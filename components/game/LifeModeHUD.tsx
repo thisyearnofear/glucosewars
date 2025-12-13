@@ -866,7 +866,9 @@ export const LifeModePauseOverlay: React.FC<{
   onResume?: () => void;
   onRestart?: () => void;
   onExit?: () => void;
-}> = ({ isPaused, onResume, onRestart, onExit }) => {
+  controlMode?: 'swipe' | 'tap';
+  onToggleControlMode?: () => void;
+}> = ({ isPaused, onResume, onRestart, onExit, controlMode = 'swipe', onToggleControlMode }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
   
@@ -946,12 +948,12 @@ export const LifeModePauseOverlay: React.FC<{
         
         <TouchableOpacity
           onPress={onResume}
-          style={{ 
+          style={{
             backgroundColor: 'rgba(34,197,94,0.3)',
-            paddingHorizontal: 24, 
-            paddingVertical: 14, 
-            borderRadius: 14, 
-            marginBottom: 12, 
+            paddingHorizontal: 24,
+            paddingVertical: 14,
+            borderRadius: 14,
+            marginBottom: 12,
             width: 200,
             borderWidth: 2,
             borderColor: '#22c55e',
@@ -963,6 +965,36 @@ export const LifeModePauseOverlay: React.FC<{
         >
           <Text style={{ color: '#86efac', textAlign: 'center', fontWeight: 'bold', fontSize: 16 }}>⚔️ CONTINUE BATTLE</Text>
         </TouchableOpacity>
+        
+        {/* Control Mode Toggle */}
+        {onToggleControlMode && (
+          <TouchableOpacity
+            onPress={onToggleControlMode}
+            style={{
+              backgroundColor: 'rgba(59,130,246,0.2)',
+              paddingHorizontal: 24,
+              paddingVertical: 14,
+              borderRadius: 14,
+              marginBottom: 12,
+              width: 200,
+              borderWidth: 2,
+              borderColor: '#3b82f6',
+              shadowColor: '#3b82f6',
+              shadowOffset: { width: 0, height: 0 },
+              shadowOpacity: 0.5,
+              shadowRadius: 10,
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ fontSize: 16, marginRight: 8 }}>{controlMode === 'swipe' ? '👆👇' : '🖱️'}</Text>
+              <View>
+                <Text style={{ color: '#93c5fd', textAlign: 'center', fontWeight: 'bold', fontSize: 10 }}>CONTROL MODE</Text>
+                <Text style={{ color: '#fff', textAlign: 'center', fontWeight: 'bold', fontSize: 14 }}>{controlMode === 'swipe' ? 'SWIPE' : 'TAP'}</Text>
+              </View>
+              <Text style={{ fontSize: 16, marginLeft: 8, color: '#60a5fa' }}>🔄</Text>
+            </View>
+          </TouchableOpacity>
+        )}
         
         <TouchableOpacity
           onPress={onRestart}

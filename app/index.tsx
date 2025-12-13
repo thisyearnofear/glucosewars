@@ -59,6 +59,10 @@ export default function HomeScreen() {
     }
   };
 
+  const handleToggleControlMode = () => {
+    setControlMode(prev => prev === 'swipe' ? 'tap' : 'swipe');
+  };
+
   const handleOnboardingComplete = (mode: ControlMode) => {
     setControlMode(mode);
     startGameForTier();
@@ -201,6 +205,7 @@ export default function HomeScreen() {
         healthProfile={tierConfig.healthProfile ? healthProfile : undefined}
         onAdministerInsulin={administerInsulin}
         tierConfig={tierConfig}
+        onToggleControlMode={handleToggleControlMode}
       />
     </View>
   );
