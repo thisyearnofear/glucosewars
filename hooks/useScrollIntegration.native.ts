@@ -110,31 +110,26 @@ export const useScrollIntegration = () => {
       const { ethers } = await import('ethers');
 
       // Check if WalletConnect is available
-      if (typeof window !== 'undefined' && window.WalletConnect) {
+      if (typeof window !== 'undefined' && (window as any).WalletConnect) {
         // Use existing WalletConnect session if available
-        const provider = new ethers.BrowserProvider(window.WalletConnect);
+        const provider = new ethers.BrowserProvider((window as any).WalletConnect);
         const signer = await provider.getSigner();
         return signer;
       }
 
       // For React Native with WalletConnect v2
-      if (typeof window !== 'undefined' && window.WalletConnectV2) {
-        const { Web3Modal } = await import('@walletconnect/modal-react-native');
+      if (typeof window !== 'undefined' && (window as any).WalletConnectV2) {
         const { EthereumProvider } = await import('@walletconnect/ethereum-provider');
 
         // Initialize WalletConnect
         const projectId = process.env.EXPO_PUBLIC_WALLETCONNECT_PROJECT_ID || 'your_project_id';
         const chains = [534351]; // Scroll Sepolia
-        const optionalChains = [534351];
-        const providerMetadata = {
+        const optionalChains = [534351] as [number, ...number[]];
+        const metadata = {
           name: 'GlucoseWars',
           description: 'Health education game on Scroll',
           url: 'https://glucosewars.com',
-          icons: ['https://glucosewars.com/icon.png'],
-          redirect: {
-            native: 'glucosewars://',
-            universal: 'https://glucosewars.com'
-          }
+          icons: ['https://glucosewars.com/icon.png']
         };
 
         // Create Ethereum provider
@@ -142,10 +137,10 @@ export const useScrollIntegration = () => {
           projectId,
           chains,
           optionalChains,
-          providerMetadata,
-          showQrModal: true,
           methods: ['eth_sendTransaction', 'personal_sign'],
-          events: ['chainChanged', 'accountsChanged']
+          events: ['chainChanged', 'accountsChanged'],
+          showQrModal: true,
+          metadata
         });
 
         // Enable session

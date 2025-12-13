@@ -146,24 +146,6 @@ export const useVRFService = () => {
     }
   }, []);
 
-  // Verify VRF proof using Anyrand contract
-  const verifyVRFProof = useCallback(async (proof: string, seed: string): Promise<boolean> => {
-    console.log('[VRF REAL] Verifying VRF proof:', proof, 'for seed:', seed);
-
-    try {
-      // In a real implementation, this would verify the cryptographic proof
-      // For now, we'll use a simplified verification
-      if (proof.startsWith('anyrand_proof_') || proof.startsWith('fallback_proof_')) {
-        return true; // Assume valid if from our system
-      }
-
-      // Additional verification could be added here
-      return proof.includes(seed);
-    } catch (error) {
-      console.error('[VRF ERROR] Proof verification failed:', error);
-      return false;
-    }
-  }, []);
 
   // Generate a fair plot twist using VRF
   const generateFairPlotTwist = useCallback(async (gameId: string, timestamp: number): Promise<{
