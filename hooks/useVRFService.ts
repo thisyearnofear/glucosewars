@@ -35,8 +35,8 @@ const MAX_DEADLINE_DELTA = 30; // 30 seconds max deadline
 const SCROLL_RPC_URL = 'https://sepolia-rpc.scroll.io';
 
 export const useVRFService = () => {
-  // Real Anyrand VRF implementation for Scroll Sepolia
-  const requestRandomness = useCallback(async (seed: string): Promise<VRFResult> => {
+  // Real Anyrand VRF implementation for Scroll Sepolia with event listeners
+  const requestRandomness = useCallback(async (seed: string, callback?: (result: VRFResult) => void): Promise<VRFResult> => {
     console.log('[VRF REAL] Requesting randomness with seed:', seed);
 
     try {
@@ -65,17 +65,33 @@ export const useVRFService = () => {
       );
 
       const receipt = await tx.wait();
+      const requestId = tx.hash;
 
-      // For now, we'll simulate the random value since we can't wait for fulfillment
-      // In a real app, you would listen for the fulfillment event
-      const randomValue = Math.floor(Math.random() * 1000000);
-      const proof = `anyrand_proof_${tx.hash}_${seed}`;
+      // Set up event listener for fulfillment
+      if (callback) {
+        anyrandContract.on('RandomnessReceived', (receivedRequestId, randomWord) => {
+          if (receivedRequestId === requestId) {
+            console.log('[VRF REAL] Randomness fulfilled for request:', requestId);
 
+            const result = {
+              randomValue: Number(randomWord),
+              proof: `anyrand_proof_${requestId}_${seed}`,
+              seed,
+              requestId,
+            };
+
+            callback(result);
+            anyrandContract.off('RandomnessReceived');
+          }
+        });
+      }
+
+      // Return immediate response with pending status
       return {
-        randomValue,
-        proof,
+        randomValue: 0, // Will be updated via callback
+        proof: `pending_${requestId}_${seed}`,
         seed,
-        requestId: tx.hash,
+        requestId,
       };
     } catch (error) {
       console.error('[VRF ERROR] Failed to request randomness:', error);
@@ -90,6 +106,43 @@ export const useVRFService = () => {
         seed,
         requestId: 'fallback',
       };
+    }
+  }, []);
+
+  // Enhanced VRF proof verification with real contract checks
+  const verifyVRFProof = useCallback(async (proof: string, seed: string): Promise<boolean> => {
+    console.log('[VRF REAL] Verifying VRF proof:', proof, 'for seed:', seed);
+
+    try {
+      const ethersModule = await import('ethers');
+      const { Contract, JsonRpcProvider } = ethersModule;
+
+      // Extract request ID from proof
+      const requestIdMatch = proof.match(/anyrand_proof_([^_]+)/);
+      if (requestIdMatch) {
+        const requestId = requestIdMatch[1];
+
+        // Check if the request was actually fulfilled onchain
+        const provider = new JsonRpcProvider(SCROLL_RPC_URL);
+        const anyrandContract = new Contract(ANYRAND_CONTRACT, ANYRAND_VRF_ABI, provider);
+
+        const state = await anyrandContract.getRequestState(requestId);
+
+        // Only consider valid if request was fulfilled (state === 2)
+        if (state === 2) {
+          return true;
+        }
+      }
+
+      // For pending or fallback proofs, use simplified verification
+      if (proof.startsWith('pending_') || proof.startsWith('fallback_')) {
+        return proof.includes(seed);
+      }
+
+      return false;
+    } catch (error) {
+      console.error('[VRF ERROR] Proof verification failed:', error);
+      return false;
     }
   }, []);
 

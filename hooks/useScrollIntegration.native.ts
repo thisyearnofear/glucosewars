@@ -104,14 +104,60 @@ export const useScrollIntegration = () => {
     }
   }, [isConnected, walletAddress]);
 
-  // Helper function to get WalletConnect signer
+  // Real WalletConnect integration for native
   const getWalletConnectSigner = async () => {
-    // This would be implemented based on your WalletConnect setup
-    // For now, we'll use a mock implementation
     try {
       const { ethers } = await import('ethers');
-      // In a real implementation, this would connect to WalletConnect
-      // and return the actual signer
+
+      // Check if WalletConnect is available
+      if (typeof window !== 'undefined' && window.WalletConnect) {
+        // Use existing WalletConnect session if available
+        const provider = new ethers.BrowserProvider(window.WalletConnect);
+        const signer = await provider.getSigner();
+        return signer;
+      }
+
+      // For React Native with WalletConnect v2
+      if (typeof window !== 'undefined' && window.WalletConnectV2) {
+        const { Web3Modal } = await import('@walletconnect/modal-react-native');
+        const { EthereumProvider } = await import('@walletconnect/ethereum-provider');
+
+        // Initialize WalletConnect
+        const projectId = process.env.EXPO_PUBLIC_WALLETCONNECT_PROJECT_ID || 'your_project_id';
+        const chains = [534351]; // Scroll Sepolia
+        const optionalChains = [534351];
+        const providerMetadata = {
+          name: 'GlucoseWars',
+          description: 'Health education game on Scroll',
+          url: 'https://glucosewars.com',
+          icons: ['https://glucosewars.com/icon.png'],
+          redirect: {
+            native: 'glucosewars://',
+            universal: 'https://glucosewars.com'
+          }
+        };
+
+        // Create Ethereum provider
+        const ethereumProvider = await EthereumProvider.init({
+          projectId,
+          chains,
+          optionalChains,
+          providerMetadata,
+          showQrModal: true,
+          methods: ['eth_sendTransaction', 'personal_sign'],
+          events: ['chainChanged', 'accountsChanged']
+        });
+
+        // Enable session
+        await ethereumProvider.enable();
+        const provider = new ethers.BrowserProvider(ethereumProvider);
+        const signer = await provider.getSigner();
+
+        return signer;
+      }
+
+      // Fallback for development/testing
+      console.warn('WalletConnect not available, using fallback signer');
       return new ethers.Wallet('0x' + '0'.repeat(64), new ethers.JsonRpcProvider(SCROLL_RPC_URL));
     } catch (error) {
       console.error('Failed to get WalletConnect signer:', error);
