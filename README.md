@@ -124,6 +124,12 @@ npx expo start
 ```bash
 npm install
 npx expo start
+or
+npx expo start --clear (clear cache)
+
+pkill -f "expo start" 2>/dev/null; sleep 2; echo "Killed existing expo processes"
+
+
 ```
 
 ### Key Files
