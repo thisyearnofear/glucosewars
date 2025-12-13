@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { GameTier } from '@/constants/gameTiers';
 import { UserMode } from '@/types/game';
 import { PrivacySettings, PrivacyMode } from '@/types/health';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface PlayerProgressState {
   maxTierUnlocked: GameTier;
@@ -18,35 +19,45 @@ export interface PlayerProgressState {
 const STORAGE_KEY = 'glucoseWars.playerProgress';
 
 export function usePlayerProgress() {
-  const [progress, setProgress] = useState<PlayerProgressState>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-    return {
-      maxTierUnlocked: 'tier1',
-      currentTier: 'tier1',
-      gamesPlayed: 0,
-      bestScore: 0,
-      skipOnboarding: false,
-      lastPlayedAt: null,
-      userMode: null,
-      privacyMode: 'standard',
-      privacySettings: {
-        mode: 'standard',
-        encryptHealthData: false,
-        glucoseLevels: 'public',
-        insulinDoses: 'public',
-        achievements: 'public',
-        gameStats: 'public',
-        healthProfile: 'public',
-      },
-    };
+  const [progress, setProgress] = useState<PlayerProgressState>({
+    maxTierUnlocked: 'tier1',
+    currentTier: 'tier1',
+    gamesPlayed: 0,
+    bestScore: 0,
+    skipOnboarding: false,
+    lastPlayedAt: null,
+    userMode: null,
+    privacyMode: 'standard',
+    privacySettings: {
+      mode: 'standard',
+      encryptHealthData: false,
+      glucoseLevels: 'public',
+      insulinDoses: 'public',
+      achievements: 'public',
+      gameStats: 'public',
+      healthProfile: 'public',
+    },
   });
 
-  // Persist to localStorage whenever progress changes
+  // Load from AsyncStorage on component mount
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+    const loadProgress = async () => {
+      try {
+        const stored = await AsyncStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          setProgress(JSON.parse(stored));
+        }
+      } catch (error) {
+        console.error('Failed to load player progress:', error);
+      }
+    };
+
+    loadProgress();
+  }, []);
+
+  // Persist to AsyncStorage whenever progress changes
+  useEffect(() => {
+    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
   }, [progress]);
 
   const unlockNextTier = (tier: GameTier) => {

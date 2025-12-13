@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, Animated, Dimensions } from 'react-native';
-import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { View, Text, TouchableOpacity, Animated, Dimensions, Platform } from 'react-native';
 import { ControlMode, UserMode } from '@/types/game';
 import { usePlayerProgress } from '@/hooks/usePlayerProgress';
 import { USER_MODE_CONFIGS } from '@/constants/userModes';
 import { PrivacyToggle } from '@/components/PrivacyToggle';
 import { PrivacySettingsModal } from '@/components/PrivacySettings';
+import { useWeb3 } from '@/context/Web3Context';
+
+// WebOnlyConnectButton is now just a pass-through component since we handle wallet connection directly
+import WebOnlyConnectButton from '@/components/WebOnlyConnectButton';
 
 const { width, height } = Dimensions.get('window');
 const screenWidth = width;
@@ -205,11 +208,6 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onUserModeSelec
       {/* Dark overlay */}
       <View className="absolute inset-0 bg-gradient-to-b from-purple-900/30 to-black/50" />
 
-      {/* Wallet Connect Button (Top Right) */}
-      <View className="absolute top-0 right-0 z-20 p-4">
-        <ConnectButton />
-      </View>
-
       {/* Content */}
       <View className="items-center z-10 px-6">
         {/* Title */}
@@ -224,6 +222,11 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onUserModeSelec
           <Text className="text-purple-300 text-base text-center italic mt-1">
             Defend Your Kingdom
           </Text>
+        </View>
+
+        {/* Wallet Connection Button (in content area) - cross-platform */}
+        <View className="mb-6">
+          <WalletConnectionButton />
         </View>
 
         {/* Progress Info (only for returning players) */}
@@ -314,7 +317,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onUserModeSelec
         <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
           <TouchableOpacity
             onPress={() => onStartGame(selectedMode)}
-            className={`px-10 py-4 rounded-2xl border-4 bg-amber-600 border-amber-400`}
+            className={`px-6 py-4 rounded-2xl border-4 bg-amber-600 border-amber-400 max-w-[320px] w-full`}
             style={{
               shadowColor: '#f59e0b',
               shadowOffset: { width: 0, height: 0 },
@@ -324,9 +327,9 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onUserModeSelec
             }}
             activeOpacity={0.8}
           >
-            <View className="flex-row items-center">
-              <Text className="text-3xl mr-3">⚔️</Text>
-              <Text className="text-white text-xl font-bold">
+            <View className="flex-row items-center justify-center">
+              <Text className="text-3xl mr-2">⚔️</Text>
+              <Text className="text-white text-base font-bold">
                 START BATTLE
               </Text>
             </View>
@@ -367,5 +370,39 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onUserModeSelec
         visible={showPrivacySettings}
       />
     </View>
+  );
+};
+
+// Cross-platform wallet connection button
+const WalletConnectionButton = () => {
+  const { isConnected, address, connectWallet, disconnectWallet } = useWeb3();
+
+  if (isConnected && address) {
+    // Show connected state with truncated address
+    const truncatedAddress = `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+
+    return (
+      <TouchableOpacity
+        className="bg-purple-600 px-3 py-2 rounded-full min-h-[36px] justify-center min-w-[100px]"
+        onPress={disconnectWallet}
+        activeOpacity={0.7}
+      >
+        <Text className="text-white text-xs font-bold truncate text-center">
+          {truncatedAddress}
+        </Text>
+      </TouchableOpacity>
+    );
+  }
+
+  return (
+    <TouchableOpacity
+      className="bg-amber-600 px-3 py-2 rounded-full min-h-[36px] justify-center min-w-[80px]"
+      onPress={connectWallet}
+      activeOpacity={0.7}
+    >
+      <Text className="text-white font-bold text-xs text-center">
+        {Platform.OS === 'web' ? 'Connect' : 'Wallet'}
+      </Text>
+    </TouchableOpacity>
   );
 };
