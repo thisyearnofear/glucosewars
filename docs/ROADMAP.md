@@ -215,6 +215,7 @@ async function generateFairPlotTwist(): PlotTwist {
 | Week | Focus Area | Status |
 |------|------------|--------|
 | 1-2 | Morning planning UI/UX | ✅ Complete |
+| 3-3 | Role badge system (optional onchain) | ✅ Complete |
 | 3-4 | Core simulation engine | 🔄 In Progress |
 | 5-6 | Evening reflection system | ⏳ Planned |
 | 7-8 | User testing & refinement | ⏳ Planned |

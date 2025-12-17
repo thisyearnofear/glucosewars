@@ -226,7 +226,8 @@ npx expo start
 - ✅ **Educational Integration** - Diabetes management lessons embedded in gameplay
 - ✅ **Scroll Foundation** - Architecture ready for zkEVM enhancements
 
-### What We're Building
+### What We've Built
+- ✅ **Role Badge System** - Optional onchain credentials for learning commitments
 - 🔄 **Slow Mo Mode** - Deliberate, educational glucose simulation
 - 📊 **Pattern Recognition** - Personalized insights from gameplay data
 - 🎓 **Learning Analytics** - Track educational progress over time

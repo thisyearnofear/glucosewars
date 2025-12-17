@@ -78,11 +78,27 @@ Predictable file structure with domain-driven design
 - 🔍 **Reflective gameplay** - Compare predictions vs reality
 - 📊 **Pattern recognition** - Personalized insights over time
 
+#### 4. Onchain Features (Optional Integration)
+**Enhanced user experience with optional blockchain features.**
+
+### Role Badge System
+**Optional onchain credentials for learning commitments.**
+- ✅ **Glucose Warrior Badge** - Personal role commitment
+- ✅ **Health Guardian Badge** - Caregiver role commitment
+- ✅ **Knowledge Seeker Badge** - Curious role commitment
+
+**Key Characteristics:**
+- 🔗 **Completely Optional** - No impact on core gameplay
+- 📱 **Mobile Optimized** - Beautiful, responsive design
+- 🎓 **Educational Focus** - Explains blockchain benefits
+- 🔒 **Privacy Preserving** - User controls what to share
+
 **Integration Strategy:**
 1. **Gameplay First** - Build core mechanics without zkEVM
-2. **User Testing** - Validate educational value on Sepolia
-3. **zkEVM Enhancement** - Add privacy/verification where valuable
-4. **Iterative Improvement** - Let user feedback guide evolution
+2. **Optional Enhancements** - Add blockchain where valuable
+3. **User Testing** - Validate educational value on Sepolia
+4. **zkEVM Enhancement** - Add privacy/verification where valuable
+5. **Iterative Improvement** - Let user feedback guide evolution
 
 ### Key Components
 
