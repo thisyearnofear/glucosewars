@@ -49,6 +49,41 @@ Predictable file structure with domain-driven design
 
 **Combo milestones**: 3→5→8→12→18→25 swipes unlock progressive multipliers, creating clear progression targets.
 
+### Game Modes Architecture
+
+#### 1. Classic Mode (Current)
+**Fast-paced gameplay** focused on quick decision making and combo building.
+- ✅ Real-time swiping
+- ✅ Immediate feedback
+- ✅ High-score focus
+- ✅ Tier-based progression
+
+#### 2. Life Mode (Current)
+**Advanced simulation** with time-based glucose effects and plot twists.
+- ✅ Time-of-day phases
+- ✅ Morning conditions
+- ✅ Plot twist events
+- ✅ Multi-metric tracking
+
+#### 3. Slow Mo Mode (New - Educational Focus)
+**Deliberate, educational simulation** for learning real-world glucose management.
+- ✅ Morning meal planning
+- ✅ Predicted glucose simulations
+- ✅ Evening reality comparison
+- ✅ Personalized educational insights
+
+**Key Differences from Classic/Life Modes:**
+- ⏳ **Slower pace** - Designed for thoughtful decision making
+- 🎓 **Educational focus** - Teaches real-world glucose management
+- 🔍 **Reflective gameplay** - Compare predictions vs reality
+- 📊 **Pattern recognition** - Personalized insights over time
+
+**Integration Strategy:**
+1. **Gameplay First** - Build core mechanics without zkEVM
+2. **User Testing** - Validate educational value on Sepolia
+3. **zkEVM Enhancement** - Add privacy/verification where valuable
+4. **Iterative Improvement** - Let user feedback guide evolution
+
 ### Key Components
 
 #### Tier Configuration
