@@ -93,6 +93,13 @@ export function usePlayerProgress() {
     }));
   };
 
+  const setCurrentTier = (tier: GameTier) => {
+    setProgress(prev => ({
+      ...prev,
+      currentTier: tier,
+    }));
+  };
+
   const setUserMode = (mode: UserMode) => {
     setProgress(prev => ({ ...prev, userMode: mode }));
   };

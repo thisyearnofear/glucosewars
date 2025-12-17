@@ -16,6 +16,7 @@ const maxWidth = Math.min(screenWidth * 0.9, 400);
 
 interface MainMenuProps {
   onStartGame: (controlMode: ControlMode) => void;
+  onSelectGame: () => void;
   onUserModeSelected?: (mode: string) => void;
   userModeSelected?: boolean;
 }
@@ -313,11 +314,35 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onUserModeSelec
           </View>
         </View>
 
-        {/* Start button */}
-        <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+        {/* Start buttons - now with two options */}
+        <View className="w-full max-w-[350px] space-y-3">
+          {/* Quick Start button */}
+          <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+            <TouchableOpacity
+              onPress={() => onStartGame(selectedMode)}
+              className={`px-6 py-4 rounded-2xl border-4 bg-green-600 border-green-400 w-full`}
+              style={{
+                shadowColor: '#10b981',
+                shadowOffset: { width: 0, height: 0 },
+                shadowOpacity: 0.8,
+                shadowRadius: 20,
+                elevation: 10,
+              }}
+              activeOpacity={0.8}
+            >
+              <View className="flex-row items-center justify-center">
+                <Text className="text-2xl mr-2">⚡</Text>
+                <Text className="text-white text-base font-bold">
+                  QUICK START
+                </Text>
+              </View>
+            </TouchableOpacity>
+          </Animated.View>
+
+          {/* Game Selection button */}
           <TouchableOpacity
-            onPress={() => onStartGame(selectedMode)}
-            className={`px-6 py-4 rounded-2xl border-4 bg-amber-600 border-amber-400 max-w-[320px] w-full`}
+            onPress={() => onSelectGame?.()}
+            className={`px-6 py-4 rounded-2xl border-4 bg-amber-600 border-amber-400 w-full`}
             style={{
               shadowColor: '#f59e0b',
               shadowOffset: { width: 0, height: 0 },
@@ -328,13 +353,13 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onUserModeSelec
             activeOpacity={0.8}
           >
             <View className="flex-row items-center justify-center">
-              <Text className="text-3xl mr-2">⚔️</Text>
+              <Text className="text-2xl mr-2">🎮</Text>
               <Text className="text-white text-base font-bold">
-                START BATTLE
+                SELECT GAME MODE
               </Text>
             </View>
           </TouchableOpacity>
-        </Animated.View>
+        </View>
 
         {/* Tip */}
         <View className="mt-3 px-4">

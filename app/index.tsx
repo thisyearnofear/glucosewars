@@ -6,13 +6,14 @@ import { ResultsScroll } from '@/components/game/ResultsScroll';
 import { Onboarding } from '@/components/game/Onboarding';
 import { WelcomeBack } from '@/components/game/WelcomeBack';
 import { MainMenu } from '@/components/game/MainMenu';
+import { GameSelectionScreen } from '@/components/game/GameSelectionScreen';
 import { useBattleGame } from '@/hooks/useBattleGame';
 import { useHealthProfile } from '@/hooks/useHealthProfile';
 import { usePlayerProgress } from '@/hooks/usePlayerProgress';
 import { ControlMode } from '@/types/game';
 import { GAME_TIERS, GameTier } from '@/constants/gameTiers';
 
-type AppScreen = 'menu' | 'onboarding' | 'battle' | 'results' | 'welcome';
+type AppScreen = 'menu' | 'onboarding' | 'battle' | 'results' | 'welcome' | 'game_selection';
 
 export default function HomeScreen() {
   const { progress, unlockNextTier, updateBestScore, incrementGamesPlayed, setSkipOnboarding, setCurrentTier } =
@@ -49,9 +50,14 @@ export default function HomeScreen() {
 
   const handleStartGame = (controlMode: ControlMode) => {
     setControlMode(controlMode);
+    startGameForTier();
+  };
+
+  const handleStartGameWithTier = (tier: GameTier, controlMode: ControlMode) => {
+    setControlMode(controlMode);
+    setCurrentTier(tier);
     
-    // First time user or if they haven't completed onboarding yet
-    // Show onboarding if: never played before OR at the start of a new tier
+    // Show onboarding only for first-time users or if explicitly requested
     if (progress.gamesPlayed === 0 || !progress.skipOnboarding) {
       setAppScreen('onboarding');
     } else {
@@ -82,6 +88,14 @@ export default function HomeScreen() {
     if (tierConfig.healthProfile) {
       startGlucoseSimulation();
     }
+  };
+
+  const handleSelectGame = () => {
+    setAppScreen('game_selection');
+  };
+
+  const handleBackFromGameSelection = () => {
+    setAppScreen('menu');
   };
 
   const handleGameResult = () => {
@@ -139,7 +153,20 @@ export default function HomeScreen() {
       <View style={{ flex: 1 }}>
         <MainMenu 
           onStartGame={handleStartGame}
+          onSelectGame={handleSelectGame}
           userModeSelected={progress.userMode !== null}
+        />
+      </View>
+    );
+  }
+
+  // Show game selection screen
+  if (appScreen === 'game_selection') {
+    return (
+      <View style={{ flex: 1 }}>
+        <GameSelectionScreen
+          onStartGame={handleStartGameWithTier}
+          onBack={handleBackFromGameSelection}
         />
       </View>
     );
