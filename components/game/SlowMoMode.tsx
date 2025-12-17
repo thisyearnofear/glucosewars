@@ -80,35 +80,155 @@ export const SlowMoMode: React.FC<SlowMoModeProps> = ({ onStartGame, onBack }) =
   };
 
   const generateGlucoseCurve = (meals: any[]) => {
-    // Simple glucose curve simulation
-    return meals.map((meal, index) => ({
-      time: index * 2 + 8, // 8am, 10am, 12pm, etc.
-      glucoseLevel: 80 + meal.glucoseImpact * 0.8,
-      meal: meal.name,
-    }));
+    // Enhanced glucose curve simulation with realistic physiology
+    const curve: any[] = [];
+    let currentGlucose = 80; // Starting fasting glucose
+    let currentTime = 8; // Start at 8am
+
+    // Add fasting baseline
+    curve.push({
+      time: currentTime,
+      glucoseLevel: currentGlucose,
+      meal: 'Fasting',
+      note: 'Baseline fasting glucose'
+    });
+
+    // Process each meal with realistic timing
+    meals.forEach((meal, index) => {
+      // Time between meals (2-3 hours)
+      const hoursSinceLast = index === 0 ? 0 : (index * 2 + Math.random());
+      currentTime += hoursSinceLast;
+      
+      // Glucose rise based on meal type and impact
+      const glucoseRise = meal.glucoseImpact * (0.7 + Math.random() * 0.3);
+      currentGlucose += glucoseRise;
+      
+      // Add meal point
+      curve.push({
+        time: Math.round(currentTime),
+        glucoseLevel: Math.round(currentGlucose),
+        meal: meal.name,
+        type: meal.type,
+        impact: glucoseRise
+      });
+      
+      // Natural glucose decrease over time (simulate insulin effect)
+      if (index < meals.length - 1) {
+        currentTime += 1; // 1 hour later
+        currentGlucose -= glucoseRise * 0.3; // Natural decrease
+        curve.push({
+          time: Math.round(currentTime),
+          glucoseLevel: Math.round(Math.max(70, currentGlucose)), // Don't go below 70
+          meal: 'Natural decrease',
+          note: 'Insulin effect'
+        });
+      }
+    });
+
+    // Add evening baseline
+    currentTime = 22;
+    currentGlucose = Math.max(70, currentGlucose - 20);
+    curve.push({
+      time: currentTime,
+      glucoseLevel: Math.round(currentGlucose),
+      meal: 'Evening',
+      note: 'End of day baseline'
+    });
+
+    return curve;
+  };
+=======
+  const generateGlucoseCurve = (meals: any[]) => {
+    // Enhanced glucose curve simulation with realistic physiology
+    const curve: any[] = [];
+    let currentGlucose = 80; // Starting fasting glucose
+    let currentTime = 8; // Start at 8am
+
+    // Add fasting baseline
+    curve.push({
+      time: currentTime,
+      glucoseLevel: currentGlucose,
+      meal: 'Fasting',
+      note: 'Baseline fasting glucose'
+    });
+
+    // Process each meal with realistic timing
+    meals.forEach((meal, index) => {
+      // Time between meals (2-3 hours)
+      const hoursSinceLast = index === 0 ? 0 : (index * 2 + Math.random());
+      currentTime += hoursSinceLast;
+      
+      // Glucose rise based on meal type and impact
+      const glucoseRise = meal.glucoseImpact * (0.7 + Math.random() * 0.3);
+      currentGlucose += glucoseRise;
+      
+      // Add meal point
+      curve.push({
+        time: Math.round(currentTime),
+        glucoseLevel: Math.round(currentGlucose),
+        meal: meal.name,
+        type: meal.type,
+        impact: glucoseRise
+      });
+      
+      // Natural glucose decrease over time (simulate insulin effect)
+      if (index < meals.length - 1) {
+        currentTime += 1; // 1 hour later
+        currentGlucose -= glucoseRise * 0.3; // Natural decrease
+        curve.push({
+          time: Math.round(currentTime),
+          glucoseLevel: Math.round(Math.max(70, currentGlucose)), // Don't go below 70
+          meal: 'Natural decrease',
+          note: 'Insulin effect'
+        });
+      }
+    });
+
+    // Add evening baseline
+    currentTime = 22;
+    currentGlucose = Math.max(70, currentGlucose - 20);
+    curve.push({
+      time: currentTime,
+      glucoseLevel: Math.round(currentGlucose),
+      meal: 'Evening',
+      note: 'End of day baseline'
+    });
+
+    return curve;
   };
 
   const getEducationalInsights = (meals: any[]) => {
     const healthyCount = meals.filter(m => m.type === 'healthy').length;
     const total = meals.length;
+    const totalImpact = meals.reduce((sum, meal) => sum + meal.glucoseImpact, 0);
+    const avgImpact = totalImpact / total;
+    
+    // Calculate glucose variability score (0-100, lower is better)
+    const variabilityScore = Math.min(100, Math.round(avgImpact / 2));
     
     if (healthyCount === total) {
       return [
-        'Excellent meal choices! This balanced approach helps maintain stable glucose levels.',
-        'Your predicted glucose curve shows minimal spikes, which is ideal for diabetes management.',
-        'Consider adding light exercise after meals to further improve glucose control.'
+        `🌟 Excellent! Your meal plan has a variability score of ${variabilityScore}/100, indicating very stable glucose control.`,
+        'This balanced approach with minimal processed carbohydrates helps maintain steady glucose levels throughout the day.',
+        `Your predicted peak glucose is around ${Math.round(totalImpact * 0.8)} mg/dL, which is in the ideal range for most people.`,
+        'Consider adding 15-30 minutes of light exercise (like walking) after meals to further enhance insulin sensitivity.'
       ];
     } else if (healthyCount >= total / 2) {
       return [
-        'Good balance of meals. You have some healthier choices mixed with higher-impact options.',
-        'The predicted spikes can be managed with proper insulin timing or portion control.',
-        'Try replacing one higher-impact meal with a healthier alternative for better stability.'
+        `📊 Your meal plan has a variability score of ${variabilityScore}/100, showing good balance with room for improvement.`,
+        'You have some healthier choices mixed with higher-impact meals. This balance is common and manageable.',
+        `Your highest predicted spike is around ${Math.round(Math.max(...meals.map(m => m.glucoseImpact)) * 0.8)} mg/dL.`,
+        'To improve stability, try replacing one higher-impact meal with a lower-glycemic alternative (e.g., swap pancakes for oatmeal).'
       ];
     } else {
       return [
-        'Your meal plan includes several high-impact choices that may cause significant glucose spikes.',
-        'Consider balancing with lower-glycemic foods to reduce overall impact.',
-        'Small changes like adding protein or fiber can help mitigate glucose spikes.'
+        `⚠️ Your meal plan has a variability score of ${variabilityScore}/100, indicating potential for significant glucose fluctuations.`,
+        'Several high-impact meals may cause glucose spikes above 180 mg/dL, which can lead to fatigue and long-term complications.',
+        `Consider these strategies:
+        • Add protein/fiber to meals (e.g., nuts to pasta, veggies to burgers)
+        • Try the "plate method": ½ veggies, ¼ protein, ¼ carbs
+        • Space out carbohydrates throughout the day rather than all at once`,
+        'Small, consistent changes can significantly improve glucose stability over time.'
       ];
     }
   };
@@ -116,24 +236,40 @@ export const SlowMoMode: React.FC<SlowMoModeProps> = ({ onStartGame, onBack }) =
   const getComparisonInsights = (planned: any[], actual: any[]) => {
     const plannedHealthy = planned.filter(m => m.type === 'healthy').length;
     const actualHealthy = actual.filter(m => m.type === 'healthy').length;
+    const plannedImpact = planned.reduce((sum, m) => sum + m.glucoseImpact, 0);
+    const actualImpact = actual.reduce((sum, m) => sum + m.glucoseImpact, 0);
+    const difference = actualImpact - plannedImpact;
     
     if (actualHealthy > plannedHealthy) {
       return [
-        'Great job making healthier choices than planned!',
-        'This shows good decision-making in real-world situations.',
-        'Keep up this positive trend for better long-term glucose control.'
+        `🌟 Excellent adaptation! You made ${actualHealthy - plannedHealthy} healthier choice(s) than planned.`,
+        `This reduced your glucose impact by ${Math.abs(difference)} mg/dL compared to your plan.`,
+        'This demonstrates great real-world decision making and flexibility!',
+        `Consider what helped you make these better choices and try to replicate it:
+        • Were you more mindful of hunger cues?
+        • Did you have healthier options available?
+        • Were you in a less stressful environment?`
       ];
     } else if (actualHealthy === plannedHealthy) {
       return [
-        'You stuck to your planned meal choices - consistency is key!',
-        'This predictable pattern helps with glucose management planning.',
-        'Consider experimenting with one healthier swap next time.'
+        `✅ Perfect consistency! You maintained your planned ${plannedHealthy} healthy meal(s).`,
+        'This predictability is excellent for glucose management and planning.',
+        `Your actual impact (${actualImpact} mg/dL) closely matched your prediction (${plannedImpact} mg/dL).`,
+        'For your next challenge, try experimenting with:
+        • Adding a short walk after one meal
+        • Drinking water before meals to help with portion control
+        • Trying one new healthy recipe'
       ];
     } else {
       return [
-        'Your actual choices had higher glucose impact than planned.',
-        'This is a learning opportunity to understand real-world challenges.',
-        'Next time, try to identify triggers that led to different choices.'
+        `📚 Learning opportunity! Your actual choices had ${Math.abs(difference)} mg/dL higher impact than planned.`,
+        'This is completely normal and part of the learning process. Let\'s analyze what happened:',
+        `You had ${plannedHealthy} healthy meals planned but ${actualHealthy} in reality.`,
+        'Reflection questions to consider:
+        • What unexpected situations arose?
+        • Were healthier options not available?
+        • How were you feeling emotionally at meal times?
+        • What could make it easier to stick to your plan next time?'
       ];
     }
   };
@@ -242,16 +378,33 @@ export const SlowMoMode: React.FC<SlowMoModeProps> = ({ onStartGame, onBack }) =
                   <Text className="text-gray-400 text-xs w-16">{point.time}:00</Text>
                   <View className="flex-1 h-2 bg-gray-700 rounded mr-2">
                     <View 
-                      className="h-2 bg-amber-400 rounded"
-                      style={{ width: `${(point.glucoseLevel - 80) / 2}%` }}
+                      className={`h-2 rounded ${
+                        point.meal === 'Fasting' || point.meal === 'Evening' || point.meal === 'Natural decrease' 
+                          ? 'bg-green-400' 
+                          : point.type === 'healthy' 
+                          ? 'bg-amber-400' 
+                          : 'bg-red-400'
+                      }`}
+                      style={{ width: `${Math.min(100, (point.glucoseLevel - 70) * 1.5)}%` }}
                     />
                   </View>
-                  <Text className="text-white text-xs w-12">{point.glucoseLevel} mg/dL</Text>
+                  <Text className={`text-xs w-12 ${
+                    point.glucoseLevel > 180 ? 'text-red-400' : 
+                    point.glucoseLevel > 140 ? 'text-amber-400' : 
+                    'text-green-400'
+                  }`}>
+                    {point.glucoseLevel} mg/dL
+                  </Text>
                 </View>
               ))}
-              <Text className="text-green-300 text-xs mt-2">
-                📊 Average predicted impact: {simulationResults.averageImpact.toFixed(1)} mg/dL
-              </Text>
+              <View className="mt-3 pt-2 border-t border-gray-700">
+                <Text className="text-green-300 text-xs mb-1">
+                  📊 Average predicted impact: {simulationResults.averageImpact.toFixed(1)} mg/dL
+                </Text>
+                <Text className="text-cyan-300 text-xs">
+                  📈 Peak predicted: {Math.max(...simulationResults.predictedCurve.map((p: any) => p.glucoseLevel))} mg/dL
+                </Text>
+              </View>
             </View>
 
             {/* Educational Insights */}
