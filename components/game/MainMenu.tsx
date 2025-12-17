@@ -143,22 +143,51 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onUserModeSelec
         <View className="absolute inset-0 bg-gradient-to-b from-purple-900/30 to-black/50" />
 
         {/* User Mode Selector */}
-        <View className="items-center z-10 px-6">
-          {/* Title */}
-          <View className="items-center mb-8">
-            <Text className="text-5xl mb-3">🎮</Text>
-            <Text className="text-white text-3xl font-bold text-center">
-              Choose Your Role
+        <View className="items-center z-10 px-4">
+          {/* Hero Title with Medieval Theme */}
+          <View className="items-center mb-6">
+            <Text className="text-6xl mb-3">👑</Text>
+            <Text className="text-amber-400 text-4xl font-bold text-center">
+              YOUR QUEST
             </Text>
-            <Text className="text-purple-300 text-sm text-center mt-2">
-              Personalize your glucose journey
+            <Text className="text-white text-xl text-center mt-1">
+              Choose Your Path to Mastery
+            </Text>
+            <Text className="text-purple-300 text-sm text-center mt-3">
+              Each journey teaches valuable glucose management skills
             </Text>
           </View>
 
-          {/* Mode Options */}
-          <View style={{ width: maxWidth }} className="space-y-3">
+          {/* Enhanced Role Cards with Educational Previews */}
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false} 
+            contentContainerStyle={{ gap: 16, paddingHorizontal: 8 }} 
+            className="mb-6"
+          >
             {(Object.keys(USER_MODE_CONFIGS) as UserMode[]).map((mode) => {
               const config = USER_MODE_CONFIGS[mode];
+              const roleData = {
+                personal: { 
+                  emblem: '🏰', 
+                  color: 'border-red-400', 
+                  bg: 'bg-red-600/20',
+                  learningFocus: 'Self-management mastery'
+                },
+                caregiver: { 
+                  emblem: '🛡️', 
+                  color: 'border-blue-400', 
+                  bg: 'bg-blue-600/20',
+                  learningFocus: 'Support techniques'
+                },
+                curious: { 
+                  emblem: '📜', 
+                  color: 'border-purple-400', 
+                  bg: 'bg-purple-600/20',
+                  learningFocus: 'Comprehensive understanding'
+                }
+              }[mode];
+
               return (
                 <TouchableOpacity
                   key={mode}
@@ -167,27 +196,65 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onUserModeSelec
                     setShowUserModeSelector(false);
                     onUserModeSelected?.(mode);
                   }}
-                  className="bg-black/60 p-4 rounded-xl border-2 border-purple-700 active:bg-purple-900/40"
+                  className={`w-64 h-72 rounded-2xl border-2 p-4 ${roleData.color} ${roleData.bg}`}
                 >
-                  <View className="flex-row items-center">
-                    <Text className="text-3xl mr-3">{config.icon}</Text>
-                    <View className="flex-1">
-                      <Text className="text-white text-base font-bold">
-                        {config.name}
-                      </Text>
-                      <Text className="text-gray-400 text-xs mt-1">
-                        {config.description}
-                      </Text>
-                    </View>
-                    <Text className="text-purple-400 text-lg">›</Text>
+                  {/* Role Emblem */}
+                  <View className="items-center mb-3">
+                    <Text className="text-5xl mb-2">{roleData.emblem}</Text>
+                    <Text className="text-2xl">{config.icon}</Text>
+                  </View>
+
+                  {/* Role Title */}
+                  <Text className={`text-xl font-bold text-center mb-2 ${mode === 'personal' ? 'text-red-300' : mode === 'caregiver' ? 'text-blue-300' : 'text-purple-300'}`}>
+                    {config.name}
+                  </Text>
+
+                  {/* Description */}
+                  <Text className="text-white text-sm text-center mb-3">
+                    {config.description}
+                  </Text>
+
+                  {/* Learning Focus */}
+                  <View className="bg-black/40 p-2 rounded-lg border border-white/20 mt-2">
+                    <Text className="text-green-300 text-xs font-bold">LEARNING FOCUS:</Text>
+                    <Text className="text-white text-xs mt-1">{roleData.learningFocus}</Text>
+                  </View>
+
+                  {/* CTA */}
+                  <View className="mt-3 items-center">
+                    <Text className="text-amber-300 text-sm font-bold">→ Choose This Path</Text>
                   </View>
                 </TouchableOpacity>
               );
             })}
+          </ScrollView>
+
+          {/* Educational Context */}
+          <View style={{ width: maxWidth }} className="bg-black/60 p-4 rounded-xl border border-cyan-700 mb-4">
+            <Text className="text-cyan-400 text-xs font-bold mb-2">💡 WHY CHOOSE A ROLE?</Text>
+            <View className="flex-row items-start">
+              <Text className="text-cyan-300 mr-2">•</Text>
+              <Text className="text-white text-xs flex-1">
+                Personalizes your educational journey and unlocks role-specific achievements
+              </Text>
+            </View>
+            <View className="flex-row items-start mt-1">
+              <Text className="text-cyan-300 mr-2">•</Text>
+              <Text className="text-white text-xs flex-1">
+                Tailors glucose management lessons to your needs and goals
+              </Text>
+            </View>
+            <View className="flex-row items-start mt-1">
+              <Text className="text-cyan-300 mr-2">•</Text>
+              <Text className="text-white text-xs flex-1">
+                Connects you with others on similar health journeys
+              </Text>
+            </View>
           </View>
 
-          <Text style={{ width: maxWidth }} className="text-gray-600 text-xs text-center mt-8">
-            💡 You can change this anytime in settings
+          {/* Settings Note */}
+          <Text style={{ width: maxWidth }} className="text-gray-500 text-xs text-center">
+            🔧 You can explore other roles anytime in settings
           </Text>
         </View>
       </View>

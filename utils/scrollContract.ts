@@ -337,7 +337,21 @@ export const ACHIEVEMENT_METADATA = {
       { trait_type: 'Rarity', value: 'Common' },
       { trait_type: 'Category', value: 'Victory' },
       { trait_type: 'Points', value: '100' },
+      { trait_type: 'Educational Value', value: 'Basic glucose management' },
     ],
+    educationalContent: {
+      title: 'Foundations of Glucose Management',
+      summary: 'You\'ve mastered the basics of identifying and responding to different food types.',
+      keyLessons: [
+        'Recognizing carbohydrate-rich foods that impact blood sugar',
+        'Understanding the difference between healthy and unhealthy choices',
+        'Building quick decision-making skills for glucose control'
+      ],
+      resources: [
+        'https://diabetes.org/healthy-living/recipes-nutrition/understanding-carbs',
+        'https://www.cdc.gov/diabetes/managing/eat-well.html'
+      ]
+    }
   },
   victory_life: {
     name: 'Life Keeper',
@@ -347,7 +361,21 @@ export const ACHIEVEMENT_METADATA = {
       { trait_type: 'Rarity', value: 'Rare' },
       { trait_type: 'Category', value: 'Victory' },
       { trait_type: 'Points', value: '250' },
+      { trait_type: 'Educational Value', value: 'Advanced glucose management' },
     ],
+    educationalContent: {
+      title: 'Advanced Glucose Management',
+      summary: 'You\'ve demonstrated the ability to manage complex glucose scenarios over time.',
+      keyLessons: [
+        'Understanding how glucose levels change throughout the day',
+        'Managing insulin timing and dosage effectively',
+        'Handling unexpected events and their impact on blood sugar'
+      ],
+      resources: [
+        'https://diabetes.org/healthy-living/medication-treatments/insulin-other-injectables',
+        'https://www.diatribe.org/learn/advanced-glucose-management'
+      ]
+    }
   },
   perfect_stability: {
     name: 'Perfect Balance',
@@ -357,7 +385,21 @@ export const ACHIEVEMENT_METADATA = {
       { trait_type: 'Rarity', value: 'Epic' },
       { trait_type: 'Category', value: 'Excellence' },
       { trait_type: 'Points', value: '150' },
+      { trait_type: 'Educational Value', value: 'Precision glucose control' },
     ],
+    educationalContent: {
+      title: 'Precision Glucose Control',
+      summary: 'You\'ve achieved perfect glucose stability, demonstrating expert-level management skills.',
+      keyLessons: [
+        'The importance of consistent monitoring and adjustment',
+        'How to maintain balance in various situations',
+        'Advanced techniques for preventing spikes and drops'
+      ],
+      resources: [
+        'https://diabetes.org/healthy-living/managing-diabetes/blood-glucose',
+        'https://www.joslin.org/patient-care/diabetes-education'
+      ]
+    }
   },
   high_combo: {
     name: 'Combo Champion',
@@ -367,39 +409,83 @@ export const ACHIEVEMENT_METADATA = {
       { trait_type: 'Rarity', value: 'Rare' },
       { trait_type: 'Category', value: 'Skill' },
       { trait_type: 'Points', value: '120' },
+      { trait_type: 'Educational Value', value: 'Rapid decision making' },
     ],
+    educationalContent: {
+      title: 'Rapid Decision Making',
+      summary: 'Your ability to make quick, accurate decisions demonstrates mastery of glucose management principles.',
+      keyLessons: [
+        'Building instinctive responses to glucose challenges',
+        'Developing pattern recognition for food impacts',
+        'Improving reaction time for better real-world management'
+      ],
+      resources: [
+        'https://diabetes.org/healthy-living/managing-diabetes/decision-making',
+        'https://www.healthline.com/diabetesmine/quick-decision-tips'
+      ]
+    }
   },
   health_streak: {
     name: 'Health Warrior',
-    description: 'Won 3 consecutive games',
+    description: 'Won 3 consecutive games - demonstrating consistent glucose management',
     image: 'ipfs://QmXXXX/health_warrior.png',
     attributes: [
       { trait_type: 'Rarity', value: 'Legendary' },
       { trait_type: 'Category', value: 'Dedication' },
       { trait_type: 'Points', value: '300' },
+      { trait_type: 'Educational Value', value: 'Consistency in diabetes management' },
     ],
+    educationalContent: {
+      title: 'The Power of Consistency',
+      summary: 'You\'ve demonstrated the ability to maintain good glucose management over multiple sessions.',
+      keyLessons: [
+        'Consistent habits lead to better long-term glucose control',
+        'Small daily victories compound into significant health improvements',
+        'Building routines reduces cognitive load in diabetes management'
+      ],
+      resources: [
+        'https://diabetes.org/healthy-living/managing-diabetes/building-routines',
+        'https://cdc.gov/diabetes/managing/manage-blood-sugar.html'
+      ]
+    }
   },
   explorer: {
     name: 'Explorer',
-    description: 'Played all available game modes',
+    description: 'Played all available game modes - comprehensive diabetes education',
     image: 'ipfs://QmXXXX/explorer.png',
     attributes: [
       { trait_type: 'Rarity', value: 'Rare' },
       { trait_type: 'Category', value: 'Discovery' },
       { trait_type: 'Points', value: '200' },
+      { trait_type: 'Educational Value', value: 'Broad diabetes knowledge' },
     ],
+    educationalContent: {
+      title: 'Comprehensive Diabetes Understanding',
+      summary: 'You\'ve explored all aspects of glucose management, from basic concepts to advanced strategies.',
+      keyLessons: [
+        'Different situations require different glucose management approaches',
+        'Flexibility and adaptability are key to long-term success',
+        'Continuous learning leads to better health outcomes'
+      ],
+      resources: [
+        'https://diabetes.org/diabetes/type-1/learning-zone',
+        'https://www.niddk.nih.gov/health-information/diabetes/overview/managing-diabetes'
+      ]
+    }
   },
 };
 
 /**
- * Helper to generate NFT metadata JSON
+ * Helper to generate NFT metadata JSON with educational content
  */
 export const generateMetadataJSON = (
   achievementId: keyof typeof ACHIEVEMENT_METADATA,
   playerAddress: string
 ) => {
   const base = ACHIEVEMENT_METADATA[achievementId];
-  return {
+  
+  // Base metadata with educational attributes
+  const metadata = {
     ...base,
     attributes: [
       ...base.attributes,
@@ -407,4 +493,15 @@ export const generateMetadataJSON = (
       { trait_type: 'Earned On', value: new Date().toISOString() },
     ],
   };
+  
+  // Add educational content if available
+  if (base.educationalContent) {
+    metadata.educationalContent = base.educationalContent;
+    metadata.attributes.push(
+      { trait_type: 'Educational Achievement', value: 'Yes' },
+      { trait_type: 'Verifiable Learning', value: base.educationalContent.title }
+    );
+  }
+  
+  return metadata;
 };
