@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, Animated, Dimensions, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, Animated, Dimensions, Platform, ScrollView } from 'react-native';
 import { ControlMode, UserMode } from '@/types/game';
 import { usePlayerProgress } from '@/hooks/usePlayerProgress';
 import { USER_MODE_CONFIGS } from '@/constants/userModes';
