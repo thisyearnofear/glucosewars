@@ -143,7 +143,7 @@ export interface SocialStats {
 }
 
 // Game modes
-export type GameMode = 'classic' | 'life';
+export type GameMode = 'classic' | 'life' | 'slowmo';
 
 export interface GameState {
   // Core

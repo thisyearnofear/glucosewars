@@ -7,8 +7,8 @@ export interface TierConfig {
   tier: GameTier;
   name: string;
   description: string;
-  duration: number; // seconds
-  foodSpawnRate: number; // ms between spawns
+  duration: number; // seconds (0 for no time limit)
+  foodSpawnRate: number; // ms between spawns (0 for no spawning)
   maxConcurrentFoods: number;
   swipeDirections: ('up' | 'down' | 'left' | 'right')[];
   showMetrics: boolean;
@@ -21,9 +21,10 @@ export interface TierConfig {
   insulinRequired: boolean;
   insulinUIEnabled: boolean;
   dexcomOption: boolean;
-  winCondition: 'points >= 100' | 'standard' | 'advanced';
+  winCondition: 'points >= 100' | 'standard' | 'advanced' | 'educational';
   requiresWin: boolean;
   gameMode: GameMode;
+  educationalFocus?: boolean; // Special flag for educational modes
 }
 
 export const GAME_TIERS: Record<GameTier, TierConfig> = {
@@ -92,6 +93,29 @@ export const GAME_TIERS: Record<GameTier, TierConfig> = {
     winCondition: 'advanced',
     requiresWin: false,
     gameMode: 'life',
+  },
+  slowmo: {
+    tier: 'slowmo',
+    name: 'Slow Mo Mode',
+    description: 'Educational glucose simulation',
+    duration: 0, // No time limit - deliberate gameplay
+    foodSpawnRate: 0, // No random spawning - planned meals
+    maxConcurrentFoods: 1, // One meal at a time
+    swipeDirections: ['up', 'down', 'left', 'right'],
+    showMetrics: true,
+    showGlucose: true,
+    showComboCounter: false,
+    showSocialStats: false,
+    enablePlotTwists: false,
+    healthProfile: 'player_selected',
+    tutorialMode: true,
+    insulinRequired: true,
+    insulinUIEnabled: true,
+    dexcomOption: true,
+    winCondition: 'educational', // No win/lose - pure learning
+    requiresWin: false,
+    gameMode: 'slowmo',
+    educationalFocus: true, // Special flag for educational mode
   },
 };
 
