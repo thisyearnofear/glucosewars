@@ -73,6 +73,9 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onUserModeSelec
   const glowAnim = useRef(new Animated.Value(0)).current;
   const { progress, setUserMode, setPrivacyMode, updatePrivacySettings } = usePlayerProgress();
   const [showUserModeSelector, setShowUserModeSelector] = useState(userModeSelected === false);
+  const [selectedRole, setSelectedRole] = useState<UserMode | null>(null);
+  const [showMintModal, setShowMintModal] = useState(false);
+  const { isConnected } = useWeb3();
 
   useEffect(() => {
     // Pulse animation for start button
@@ -192,6 +195,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onUserModeSelec
                 <TouchableOpacity
                   key={mode}
                   onPress={() => {
+                    setSelectedRole(mode);
                     setUserMode(mode);
                     setShowUserModeSelector(false);
                     onUserModeSelected?.(mode);
@@ -253,10 +257,43 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onUserModeSelec
           </View>
 
           {/* Settings Note */}
-          <Text style={{ width: maxWidth }} className="text-gray-500 text-xs text-center">
+          <Text style={{ width: maxWidth }} className="text-gray-500 text-xs text-center mb-4">
             🔧 You can explore other roles anytime in settings
           </Text>
+
+          {/* Optional Onchain Badge (only show if wallet connected) */}
+          {isConnected && (
+            <View style={{ width: maxWidth }} className="bg-black/60 p-4 rounded-xl border border-amber-700">
+              <Text className="text-amber-400 text-xs font-bold mb-2">🏅 OPTIONAL BADGE</Text>
+              <Text className="text-white text-xs text-center mb-3">
+                Mint your role as an onchain badge to carry through your journey
+              </Text>
+              <TouchableOpacity
+                onPress={() => setShowMintModal(true)}
+                className="px-4 py-2 rounded-lg border border-amber-400 bg-amber-600/20"
+              >
+                <Text className="text-amber-300 text-xs text-center">
+                  {selectedRole ? 'Mint Selected Role' : 'Learn About Badges'}
+                </Text>
+              </TouchableOpacity>
+              <Text className="text-gray-500 text-xs text-center mt-2">
+                Completely optional - works without minting!
+              </Text>
+            </View>
+          )}
         </View>
+
+        {/* Onchain Badge Minting Modal */}
+        <RoleBadgeModal
+          visible={showMintModal}
+          onClose={() => setShowMintModal(false)}
+          role={selectedRole}
+          userMode={progress.userMode}
+          onMintSuccess={() => {
+            setShowMintModal(false);
+            // Role selection continues normally
+          }}
+        />
       </View>
     );
   }
