@@ -53,9 +53,15 @@ export default function HomeScreen() {
     startGameForTier();
   };
 
-  const handleStartGameWithTier = (tier: GameTier, controlMode: ControlMode) => {
+  const handleStartGameWithTier = (tier: GameTier, controlMode: ControlMode, gameMode?: GameMode) => {
     setControlMode(controlMode);
     setCurrentTier(tier);
+    
+    // Set the game mode if provided
+    if (gameMode) {
+      // In a real implementation, we would set this in game state
+      console.log(`Game mode selected: ${gameMode}`);
+    }
     
     // Show onboarding only for first-time users or if explicitly requested
     if (progress.gamesPlayed === 0 || !progress.skipOnboarding) {

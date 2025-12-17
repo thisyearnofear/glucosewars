@@ -18,6 +18,7 @@ export const GameSelectionScreen: React.FC<GameSelectionScreenProps> = ({ onStar
   const [selectedTier, setSelectedTier] = useState<GameTier>(progress.currentTier || 'tier1');
   const [selectedControlMode, setSelectedControlMode] = useState<ControlMode>('swipe');
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
+  const [gameMode, setGameMode] = useState<GameMode>('classic');
   
   // Available tiers based on player progress
   const availableTiers: GameTier[] = ['tier1'];
@@ -50,6 +51,40 @@ export const GameSelectionScreen: React.FC<GameSelectionScreenProps> = ({ onStar
       <View className="items-center z-10 px-4 flex-1 justify-center">
         <Text className="text-white text-2xl font-bold mb-2">Choose Your Challenge</Text>
         <Text className="text-purple-300 text-sm mb-6">Select difficulty and game mode</Text>
+
+        {/* Game Mode Selection */}
+        <View className="mb-4">
+          <Text className="text-white text-sm mb-2">Game Mode:</Text>
+          <View className="flex-row gap-2 mb-6">
+            <TouchableOpacity
+              onPress={() => setGameMode('classic')}
+              className={`flex-1 p-3 rounded-lg border ${
+                gameMode === 'classic' ? 'bg-amber-600/30 border-amber-400' : 'bg-black/40 border-purple-700'
+              }`}
+            >
+              <Text className="text-white text-center font-bold">CLASSIC</Text>
+              <Text className="text-gray-400 text-xs text-center">Fast-paced</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setGameMode('life')}
+              className={`flex-1 p-3 rounded-lg border ${
+                gameMode === 'life' ? 'bg-amber-600/30 border-amber-400' : 'bg-black/40 border-purple-700'
+              }`}
+            >
+              <Text className="text-white text-center font-bold">LIFE</Text>
+              <Text className="text-gray-400 text-xs text-center">Simulation</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setGameMode('slowmo')}
+              className={`flex-1 p-3 rounded-lg border ${
+                gameMode === 'slowmo' ? 'bg-amber-600/30 border-amber-400' : 'bg-black/40 border-purple-700'
+              }`}
+            >
+              <Text className="text-white text-center font-bold">SLOW MO</Text>
+              <Text className="text-gray-400 text-xs text-center">Educational</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
 
         {/* Tier Selection */}
         <ScrollView 
@@ -175,7 +210,7 @@ export const GameSelectionScreen: React.FC<GameSelectionScreenProps> = ({ onStar
 
         {/* Start Button */}
         <TouchableOpacity
-          onPress={() => onStartGame(selectedTier, selectedControlMode)}
+          onPress={() => onStartGame(selectedTier, selectedControlMode, gameMode)}
           className={`px-8 py-4 rounded-2xl border-4 bg-amber-600 border-amber-400 w-full max-w-[350px]`}
           style={{
             shadowColor: '#f59e0b',
