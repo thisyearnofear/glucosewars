@@ -97,6 +97,15 @@ The agent proposes. The patient disposes.
 
 Mira may autonomously detect patterns, select one in-scope mission, remember responses, follow up once on a "later today" promise, and compile a weekly digest. Every proposal exposes its decision trace: what was observed, what was proposed, and what it is waiting for next. Mira must ask before changing a mission mid-day, involving a supporter, or suggesting care-team outreach. She must never dose, diagnose, shame, contact people without consent, imply access to another Famile product, or obscure her reasoning.
 
+## Voice direction
+
+Voice is a possible low-friction input surface for mission reflection and
+patient-reported outcomes. The shared Famile architecture note is at
+`../../famile/web/docs/VOICE_PLATFORM.md`. A voice transcript is treated as a
+patient-provided observation and enters the same bounded decision trace as
+typed input. Vocal biomarkers, emotion inference, and concordance scoring are
+not part of Sukari's product contract.
+
 ## Cohort Evidence and the Operator Surface
 
 Patients on a metabolic mission will eventually ask: *am I responding normally? Will this work for someone like me? Is my pattern unusual?* The instinct is to look sideways at other people. Sukari's answer is to put aggregate evidence on the operator surface, not the patient surface, and to keep the patient conversation exactly as it is.

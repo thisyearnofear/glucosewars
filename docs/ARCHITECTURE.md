@@ -1,5 +1,18 @@
 # Sukari Architecture
 
+## Voice platform direction
+
+TrueVoice is a useful reference for a future voice input path: browser audio
+capture, streaming transcription, ephemeral sessions, and typed event fan-out.
+The shared Famile direction is documented in
+`../../famile/web/docs/VOICE_PLATFORM.md`.
+
+The first Sukari use should be optional voice journaling or mission reflection,
+with the resulting transcript treated like a patient-provided observation.
+Deterministic programme logic still owns mission eligibility, safety, and
+escalation. Do not use vocal biomarkers or concordance logic to infer emotion,
+concealment, adherence, diagnosis, or dose-related need.
+
 Sukari is a React Native Expo app with a local-first adherence loop and optional worker-backed coaching/digest publishing. The current product spine is:
 
 ```text
